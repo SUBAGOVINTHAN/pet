@@ -30,7 +30,10 @@ function PublicLayout() {
   return (
     <>
       <Navbar />
-      <main style={{ minHeight: '70vh' }}>
+      {/* ✅ FIX: overflowX hidden here at the layout level.
+          This prevents any child page from causing horizontal scroll/content shift.
+          Do NOT put overflowX:hidden inside individual pages like Home.jsx */}
+      <main style={{ minHeight: '70vh', overflowX: 'hidden' }}>
         <Outlet />
       </main>
       <Footer />

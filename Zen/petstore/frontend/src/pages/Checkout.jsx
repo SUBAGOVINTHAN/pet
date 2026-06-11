@@ -8,7 +8,6 @@ import { CheckCircle } from 'lucide-react';
 import Select from 'react-select';
 import { State } from 'country-state-city';
 
-// ─── react-select custom styles (orange theme) ───────────────────────────────
 const selectStyles = (filled = false, disabled = false) => ({
   control: (base, state) => ({
     ...base,
@@ -37,12 +36,10 @@ const selectStyles = (filled = false, disabled = false) => ({
 
 const labelStyle = { fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6, color: '#555' };
 
-// ─── State options (India) ────────────────────────────────────────────────────
 const STATE_OPTIONS = State.getStatesOfCountry('IN')
   .sort((a, b) => a.name.localeCompare(b.name))
   .map(s => ({ value: s.isoCode, label: s.name }));
 
-// ─── District map ─────────────────────────────────────────────────────────────
 const DISTRICT_MAP = {
   TN: ['Ariyalur','Chengalpattu','Chennai','Coimbatore','Cuddalore','Dharmapuri','Dindigul','Erode','Kallakurichi','Kancheepuram','Kanniyakumari','Karur','Krishnagiri','Madurai','Nagapattinam','Namakkal','Nilgiris','Perambalur','Pudukkottai','Ramanathapuram','Ranipet','Salem','Sivaganga','Tenkasi','Thanjavur','Theni','Thoothukudi','Tiruchirappalli','Tirunelveli','Tirupathur','Tiruppur','Tiruvallur','Tiruvannamalai','Tiruvarur','Vellore','Viluppuram','Virudhunagar'].sort(),
   AP: ['Alluri Sitharama Raju','Anakapalli','Ananthapuramu','Annamayya','Bapatla','Chittoor','East Godavari','Eluru','Guntur','Kakinada','Krishna','Kurnool','Nandyal','NTR','Palnadu','Prakasam','Sri Potti Sriramulu Nellore','Sri Sathya Sai','Srikakulam','Tirupati','Visakhapatnam','Vizianagaram','West Godavari','YSR Kadapa'].sort(),
@@ -56,7 +53,6 @@ const DISTRICT_MAP = {
   DL: ['Central Delhi','East Delhi','New Delhi','North Delhi','North East Delhi','North West Delhi','Shahdara','South Delhi','South East Delhi','South West Delhi','West Delhi'].sort(),
 };
 
-// ─── City map ─────────────────────────────────────────────────────────────────
 const CITY_MAP = {
   'Ariyalur': ['Ariyalur','Andimadam','Jayankondam','Sendurai','Udayarpalayam','T.Palur','Perambalur','Thirumanur'],
   'Chengalpattu': ['Chengalpattu','Maraimalai Nagar','Tambaram','Vandalur','Guduvanchery','Urapakkam','Padappai','Singaperumalkoil','Maduranthakam','Uthiramerur'],
@@ -197,25 +193,21 @@ export default function Checkout() {
     district:       '',
     city:           '',
     pincode:        '',
-    // payment_method: 'cod',
-    payment_method: 'stripe',
+    payment_method: 'razorpay',
     notes:          '',
   });
 
-  // ── Shipping logic: TN = FREE, all other states = ₹99 ──────────────────────
   const isTamilNadu = form.state === 'TN';
   const shipping    = isTamilNadu ? 0 : 99;
   const tax         = (cartTotal - couponDiscount) * 0.18;
   const total       = cartTotal - couponDiscount + shipping + tax;
 
-  // ── State → districts ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!form.state) { setDistrictOptions([]); setCityOptions([]); return; }
     const list = (DISTRICT_MAP[form.state] || []).map(d => ({ value: d, label: d }));
     setDistrictOptions(list);
   }, [form.state]);
 
-  // ── District → cities ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!form.district) { setCityOptions([]); return; }
     const cities = (CITY_MAP[form.district] || [])
@@ -224,7 +216,6 @@ export default function Checkout() {
     setCityOptions(cities);
   }, [form.district]);
 
-  // ── City → pincode ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!form.city) return;
     const fetchPincode = async () => {
@@ -263,7 +254,6 @@ export default function Checkout() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.city]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
   const handleStateChange = option => setForm(f => ({
     ...f, state: option?.value || '', stateLabel: option?.label || '',
     district: '', city: '', pincode: '',
@@ -277,130 +267,118 @@ export default function Checkout() {
     ...f, city: option?.value || '', pincode: '',
   }));
 
-  const applyCoupon = () => toast.success('Coupon will be applied on checkout!');
-
+  // ── Load Razorpay script ────────────────────────────────────────────────────
   const loadRazorpay = () =>
-  new Promise(resolve => {
-    if (window.Razorpay) return resolve(true);
-    const script    = document.createElement('script');
-    script.src      = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload   = () => resolve(true);
-    script.onerror  = () => resolve(false);
-    document.body.appendChild(script);
-  });
+    new Promise(resolve => {
+      if (window.Razorpay) return resolve(true);
+      const script    = document.createElement('script');
+      script.src      = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload   = () => resolve(true);
+      script.onerror  = () => resolve(false);
+      document.body.appendChild(script);
+    });
 
-  // const handleSubmit = async () => {
-  //   const { name, phone, address, city, state, district, pincode } = form;
-  //   if (!name || !phone || !address || !state || !district || !city || !pincode) {
-  //     toast.error('Please fill all required fields'); return;
-  //   }
-  //   setLoading(true);
-  //   try {
-  //     const { data } = await api.post('/orders', {
-  //       shipping:       { ...form, state: form.stateLabel },
-  //       payment_method: form.payment_method,
-  //       notes:          form.notes,
-  //       coupon_code:    coupon,
-  //     });
-  //     setOrderPlaced(data);
-  //     clearCart();
-  //   } catch (err) {
-  //     toast.error(err.response?.data?.message || 'Order failed');
-  //   } finally { setLoading(false); }
-  // };
-
+  // ── Handle submit ───────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-  const { name, phone, address, city, state, district, pincode } = form;
-  if (!name || !phone || !address || !state || !district || !city || !pincode) {
-    toast.error('Please fill all required fields');
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    // 1️⃣ Load SDK
-    const loaded = await loadRazorpay();
-    if (!loaded) {
-      toast.error('Razorpay failed to load. Check your internet.');
-      setLoading(false);
+    const { name, phone, address, city, state, district, pincode } = form;
+    if (!name || !phone || !address || !state || !district || !city || !pincode) {
+      toast.error('Please fill all required fields');
       return;
     }
 
-    // 2️⃣ Create order on your backend
-    const { data: rpOrder } = await api.post('/payment/create-order', {
-      amount: total,  // final total in ₹
-    });
+    setLoading(true);
 
-    // 3️⃣ Open Razorpay checkout popup
-    const options = {
-      key:         import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount:      rpOrder.amount,       // paise from backend
-      currency:    'INR',
-      name:        'Dot Pet Foods',
-      description: 'Pet Store Order',
-      image:       '/logo.png',
-      order_id:    rpOrder.orderId,
-      prefill: {
-        name:    form.name,
-        email:   form.email,
-        contact: form.phone,
-      },
-      theme: { color: '#F97316' },
+    try {
+      // 1️⃣ Load Razorpay SDK
+      const loaded = await loadRazorpay();
+      if (!loaded) {
+        toast.error('Razorpay failed to load. Check your internet.');
+        setLoading(false);
+        return;
+      }
 
-      // 4️⃣ Payment success callback
-      handler: async (response) => {
-        try {
-          // 5️⃣ Verify on backend
-          await api.post('/payment/verify', {
-            razorpay_order_id:   response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature:  response.razorpay_signature,
-          });
+      // 2️⃣ Create order on backend
+      const { data: rpOrder } = await api.post('/payment/create-order', {
+        amount: total,
+      });
 
-          // 6️⃣ Save order to your DB
-          const { data } = await api.post('/orders', {
-            shipping:           { ...form, state: form.stateLabel },
-            payment_method:     'razorpay',
-            payment_id:         response.razorpay_payment_id,
-            razorpay_order_id:  response.razorpay_order_id,
-            notes:              form.notes,
-            coupon_code:        coupon || null,
-          });
-
-          setOrderPlaced(data);
-          clearCart();
-        } catch {
-          toast.error('Payment done but order save failed. Contact support with payment ID: ' + response.razorpay_payment_id);
-        } finally {
-          setLoading(false);
-        }
-      },
-
-      modal: {
-        ondismiss: () => {
-          toast.error('Payment cancelled');
-          setLoading(false);
+      // 3️⃣ Razorpay options
+      const options = {
+        key:         import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount:      rpOrder.amount,
+        currency:    'INR',
+        name:        'Dot Pet Foods',
+        description: 'Pet Store Order',
+        order_id:    rpOrder.orderId,
+        prefill: {
+          name:    form.name,
+          email:   form.email,
+          contact: form.phone.length === 10 ? `+91${form.phone}` : form.phone,
         },
-      },
-    };
+        config: {
+          display: {
+            hide: [{ method: 'paylater' }],
+          },
+        },
+        theme: { color: '#F97316' },
 
-    const rzp = new window.Razorpay(options);
+        // 4️⃣ Success callback
+        handler: async (response) => {
+          try {
+            // 5️⃣ Verify signature
+            await api.post('/payment/verify', {
+              razorpay_order_id:   response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature:  response.razorpay_signature,
+            });
 
-    rzp.on('payment.failed', (response) => {
-      toast.error('Payment failed: ' + response.error.description);
+            // 6️⃣ Save order to DB
+            const { data } = await api.post('/orders', {
+              shipping:          { ...form, state: form.stateLabel },
+              payment_method:    'razorpay',
+              payment_id:        response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              notes:             form.notes,
+              coupon_code:       coupon || null,
+            });
+
+            setOrderPlaced(data);
+            clearCart();
+          } catch {
+            toast.error(
+              'Payment done but order save failed. Contact support with payment ID: ' +
+              response.razorpay_payment_id
+            );
+          } finally {
+            setLoading(false);
+          }
+        },
+
+        modal: {
+          ondismiss: () => {
+            toast.error('Payment cancelled');
+            setLoading(false);
+          },
+          escape:        true,
+          backdropclose: false,
+        },
+      };
+
+      // 5️⃣ Open Razorpay popup ← only ONE rzp here
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (response) => {
+        toast.error('Payment failed: ' + response.error.description);
+        setLoading(false);
+      });
+      rzp.open();
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Something went wrong');
       setLoading(false);
-    });
+    }
+  };
 
-    rzp.open();
-
-  } catch (err) {
-    toast.error(err.response?.data?.message || 'Something went wrong');
-    setLoading(false);
-  }
-};
-
-  // ── Order success ───────────────────────────────────────────────────────────
+  // ── Order success screen ────────────────────────────────────────────────────
   if (orderPlaced) return (
     <div style={{ textAlign: 'center', padding: '80px 20px', maxWidth: 480, margin: '0 auto' }}>
       <CheckCircle size={80} color="#10B981" style={{ margin: '0 auto 20px', display: 'block' }} />
@@ -438,10 +416,9 @@ export default function Checkout() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 32 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-          {/* ── Shipping Information ── */}
+          {/* Shipping Information */}
           <div className="card" style={{ padding: 24 }}>
             <h3 style={{ fontWeight: 700, marginBottom: 20 }}>Shipping Information</h3>
-
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {inp('Full Name', 'name')}
               {inp('Phone', 'phone', 'tel')}
@@ -450,8 +427,6 @@ export default function Checkout() {
             <div style={{ marginTop: 16 }}>{inp('Address', 'address')}</div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
-
-              {/* State */}
               <div>
                 <label style={labelStyle}>State <span style={{ color: 'red' }}>*</span></label>
                 <Select
@@ -463,7 +438,6 @@ export default function Checkout() {
                   menuPortalTarget={document.body}
                   styles={selectStyles(!!form.state, false)}
                 />
-                {/* Live shipping badge — appears right under State dropdown */}
                 {form.state && (
                   <div style={{
                     marginTop: 6, fontSize: 11, fontWeight: 600, padding: '3px 8px',
@@ -476,7 +450,6 @@ export default function Checkout() {
                 )}
               </div>
 
-              {/* District */}
               <div>
                 <label style={labelStyle}>District <span style={{ color: 'red' }}>*</span></label>
                 <Select
@@ -491,7 +464,6 @@ export default function Checkout() {
                 />
               </div>
 
-              {/* City */}
               <div>
                 <label style={labelStyle}>City <span style={{ color: 'red' }}>*</span></label>
                 <Select
@@ -510,7 +482,6 @@ export default function Checkout() {
                 />
               </div>
 
-              {/* Pincode */}
               <div>
                 <label style={labelStyle}>Pincode <span style={{ color: 'red' }}>*</span></label>
                 <div style={{ position: 'relative' }}>
@@ -530,7 +501,6 @@ export default function Checkout() {
                   )}
                 </div>
               </div>
-
             </div>
 
             <div style={{ marginTop: 16 }}>
@@ -543,7 +513,7 @@ export default function Checkout() {
             </div>
           </div>
 
-          {/* ── Payment ── */}
+          {/* Payment Method */}
           <div className="card" style={{ padding: 24 }}>
             <h3 style={{ fontWeight: 700, marginBottom: 20 }}>Payment Method</h3>
             <div style={{
@@ -572,12 +542,11 @@ export default function Checkout() {
           </div>
         </div>
 
-        {/* ── Order Summary ── */}
+        {/* Order Summary */}
         <div>
           <div className="card" style={{ padding: 24, position: 'sticky', top: 90 }}>
             <h3 style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }}>Order Summary</h3>
 
-            {/* Cart items list */}
             <div style={{ maxHeight: 200, overflowY: 'auto', marginBottom: 16 }}>
               {cartItems.map(i => (
                 <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 8 }}>
@@ -587,17 +556,7 @@ export default function Checkout() {
               ))}
             </div>
 
-            {/* Coupon input */}
-            {/* <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-              <input className="input" placeholder="Coupon code" value={coupon}
-                onChange={e => setCoupon(e.target.value.toUpperCase())}
-                style={{ flex: 1, fontSize: 13 }} />
-              <button className="btn btn-outline btn-sm" onClick={applyCoupon}>Apply</button>
-            </div> */}
-
-            {/* Price breakdown */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid #eee', paddingTop: 16 }}>
-
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ color: '#555' }}>Subtotal</span>
                 <span>₹{cartTotal.toFixed(2)}</span>
@@ -610,12 +569,10 @@ export default function Checkout() {
                 </div>
               )}
 
-              {/* Shipping row — shows hint until state is selected */}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ color: '#555' }}>Shipping</span>
                 <div style={{ textAlign: 'right' }}>
                   {!form.state ? (
-                    // No state selected yet — show info
                     <span style={{ color: '#9CA3AF', fontSize: 12 }}>TN: Free | Others: ₹99</span>
                   ) : (
                     <span style={{ fontWeight: 600, color: isTamilNadu ? '#10B981' : '#1C1C1C' }}>
@@ -633,12 +590,12 @@ export default function Checkout() {
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 18, borderTop: '1.5px dashed #eee', paddingTop: 12 }}>
                 <span>Total</span>
                 <span style={{ color: '#F97316' }}>
-                  {/* Show estimated total when state not selected */}
-                  {!form.state ? `₹${(cartTotal - couponDiscount + 99 + (cartTotal - couponDiscount) * 0.18).toFixed(2)}*` : `₹${total.toFixed(2)}`}
+                  {!form.state
+                    ? `₹${(cartTotal - couponDiscount + 99 + (cartTotal - couponDiscount) * 0.18).toFixed(2)}*`
+                    : `₹${total.toFixed(2)}`}
                 </span>
               </div>
 
-              {/* Asterisk note when state not yet selected */}
               {!form.state && (
                 <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: -4 }}>
                   * Estimated total. Select state for exact amount.

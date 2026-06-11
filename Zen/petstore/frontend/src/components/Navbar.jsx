@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Heart, User, Search, LogOut, Package, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, Heart, User, Search, LogOut, Package, LayoutDashboard, X, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import logo from '../assets/logo.jpg';
@@ -11,13 +11,18 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const userMenuRef = useRef(null); // ← இது missing இருந்தது!
+  const userMenuRef = useRef(null);
+  const searchRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setUserMenu(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -26,87 +31,361 @@ export default function Navbar() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (search.trim()) { navigate(`/products?search=${search}`); setSearch(''); }
+    if (search.trim()) {
+      navigate(`/products?search=${search}`);
+      setSearch('');
+      setSearchOpen(false);
+    }
   };
 
-  const handleLogout = () => { logout(); navigate('/'); setUserMenu(false); };
+  const handleLogout = () => { logout(); navigate('/'); setUserMenu(false); setMenuOpen(false); };
 
   return (
-    <nav style={{ background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', position: 'sticky', top: 0, zIndex: 100 }}>
-      <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 16, height: 70 }}>
+    <>
+      <nav style={{
+        background: '#fff',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <div className="container" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          height: 64,
+          padding: '0 16px'   /* ✅ consistent 16px on both sides */
+        }}>
 
-        {/* Logo */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <img src={logo} alt="PetStore" style={{ height: 44, width: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid #F97316' }} />
-          <span style={{ fontWeight: 800, fontSize: 20, color: '#0d0d0d', fontFamily: 'Poppins, sans-serif' }}>Dot Pet Foods</span>
-        </Link>
-
-        {/* Search */}
-        <form onSubmit={handleSearch} style={{ flex: 1, display: 'flex', maxWidth: 480, position: 'relative' }}>
-          <input
-            className="input"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search products, pets..."
-            style={{ paddingRight: 44, borderRadius: 24 }}
-          />
-          <button type="submit" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#F97316', cursor: 'pointer' }}>
-            <Search size={18} />
-          </button>
-        </form>
-
-        {/* Nav links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} className="desktop-nav">
-          <Link to="/products" style={{ padding: '8px 14px', fontWeight: 500, color: '#1C1C1C', borderRadius: 8, fontSize: 14 }}>Shop</Link>
-
-          <Link to="/wishlist" style={{ position: 'relative', padding: 8, color: '#555', display: 'flex' }}>
-            <Heart size={22} />
+          {/* Logo */}
+          <Link to="/" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexShrink: 0,
+            textDecoration: 'none'
+          }}>
+            <img src={logo} alt="PetStore" style={{
+              height: 40,
+              width: 40,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid #F97316'
+            }} />
+            <span className="brand-name" style={{
+              fontWeight: 800,
+              fontSize: 18,
+              color: '#0d0d0d',
+              fontFamily: 'Poppins, sans-serif'
+            }}>Dot Pet Foods</span>
           </Link>
 
-          <Link to="/cart" style={{ position: 'relative', padding: 8, color: '#555', display: 'flex' }}>
-            <ShoppingCart size={22} />
-            {cartCount > 0 && (
-              <span className="badge" style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, fontSize: 10 }}>{cartCount}</span>
-            )}
-          </Link>
+          {/* Desktop Search */}
+          <form onSubmit={handleSearch} className="desktop-search" style={{
+            flex: 1,
+            display: 'flex',
+            maxWidth: 420,
+            position: 'relative'
+          }}>
+            <input
+              className="input"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search products, pets..."
+              style={{ paddingRight: 44, borderRadius: 24 }}
+            />
+            <button type="submit" style={{
+              position: 'absolute', right: 12, top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none', border: 'none',
+              color: '#F97316', cursor: 'pointer'
+            }}>
+              <Search size={18} />
+            </button>
+          </form>
 
-          {user ? (
-            <div style={{ position: 'relative' }} ref={userMenuRef}>
-              <button
-                onClick={() => setUserMenu(!userMenu)}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFF7F0', border: '1.5px solid #F97316', borderRadius: 24, padding: '6px 14px', fontWeight: 600, fontSize: 13, color: '#F97316' }}
-              >
-                <User size={16} /> {user.name.split(' ')[0]}
-              </button>
+          {/* Spacer */}
+          <div style={{ flex: 1 }} className="mobile-spacer" />
 
-              {userMenu && (
-                <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '1px solid #eee', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', minWidth: 180, zIndex: 999, overflow: 'hidden' }}>
-                  {isAdmin && (
-                    <Link to="/admin" onClick={() => setUserMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', fontSize: 14, fontWeight: 600, color: '#F97316', borderBottom: '1px solid #eee' }}>
-                      <LayoutDashboard size={16} /> Admin Panel
+          {/* Right Side Icons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+
+            {/* Mobile Search Toggle */}
+            <button
+              className="mobile-only"
+              onClick={() => setSearchOpen(!searchOpen)}
+              style={{
+                background: 'none', border: 'none',
+                padding: 8, color: '#555', cursor: 'pointer',
+                display: 'flex', alignItems: 'center'
+              }}
+            >
+              <Search size={22} />
+            </button>
+
+            {/* Wishlist */}
+            <Link to="/wishlist" style={{
+              position: 'relative', padding: 8,
+              color: '#555', display: 'flex'
+            }}>
+              <Heart size={22} />
+            </Link>
+
+            {/* Cart */}
+            <Link to="/cart" style={{
+              position: 'relative', padding: 8,
+              color: '#555', display: 'flex'
+            }}>
+              <ShoppingCart size={22} />
+              {cartCount > 0 && (
+                <span className="badge" style={{
+                  position: 'absolute', top: 2, right: 2,
+                  width: 18, height: 18, fontSize: 10
+                }}>{cartCount}</span>
+              )}
+            </Link>
+
+            {/* Desktop User Menu */}
+            {user ? (
+              <div className="desktop-only" style={{ position: 'relative' }} ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenu(!userMenu)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    background: '#FFF7F0', border: '1.5px solid #F97316',
+                    borderRadius: 24, padding: '6px 14px',
+                    fontWeight: 600, fontSize: 13, color: '#F97316',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <User size={16} /> {user.name.split(' ')[0]}
+                </button>
+
+                {userMenu && (
+                  <div style={{
+                    position: 'absolute', right: 0, top: '110%',
+                    background: '#fff', border: '1px solid #eee',
+                    borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    minWidth: 180, zIndex: 999, overflow: 'hidden'
+                  }}>
+                    {isAdmin && (
+                      <Link to="/admin" onClick={() => setUserMenu(false)} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '12px 16px', fontSize: 14, fontWeight: 600,
+                        color: '#F97316', borderBottom: '1px solid #eee',
+                        textDecoration: 'none'
+                      }}>
+                        <LayoutDashboard size={16} /> Admin Panel
+                      </Link>
+                    )}
+                    <Link to="/profile" onClick={() => setUserMenu(false)} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '12px 16px', fontSize: 14, color: '#333',
+                      textDecoration: 'none'
+                    }}>
+                      <User size={16} /> My Profile
                     </Link>
-                  )}
-                  <Link to="/profile" onClick={() => setUserMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', fontSize: 14, color: '#333' }}>
-                    <User size={16} /> My Profile
-                  </Link>
-                  <Link to="/orders" onClick={() => setUserMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', fontSize: 14, color: '#333' }}>
-                    <Package size={16} /> My Orders
-                  </Link>
-                  <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', fontSize: 14, color: '#EF4444', width: '100%', background: 'none', border: 'none', cursor: 'pointer', borderTop: '1px solid #eee' }}>
-                    <LogOut size={16} /> Logout
-                  </button>
+                    <Link to="/orders" onClick={() => setUserMenu(false)} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '12px 16px', fontSize: 14, color: '#333',
+                      textDecoration: 'none'
+                    }}>
+                      <Package size={16} /> My Orders
+                    </Link>
+                    <button onClick={handleLogout} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '12px 16px', fontSize: 14, color: '#EF4444',
+                      width: '100%', background: 'none', border: 'none',
+                      cursor: 'pointer', borderTop: '1px solid #eee'
+                    }}>
+                      <LogOut size={16} /> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/login" className="btn btn-primary btn-sm desktop-only">Login</Link>
+            )}
+
+            {/* Mobile Hamburger — ✅ marginRight: 4 fixes the edge-touching issue */}
+            <button
+              className="mobile-only"
+              onClick={() => setMenuOpen(!menuOpen)}
+              style={{
+                background: 'none', border: 'none',
+                padding: 8, color: '#333', cursor: 'pointer',
+                display: 'flex', alignItems: 'center',
+                marginRight: 4   /* ✅ FIX: pulls icon away from screen edge */
+              }}
+            >
+              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Search Bar — slides down */}
+        {searchOpen && (
+          <div ref={searchRef} className="mobile-only" style={{
+            padding: '8px 16px 12px',
+            borderTop: '1px solid #f0f0f0'
+          }}>
+            <form onSubmit={handleSearch} style={{ position: 'relative' }}>
+              <input
+                autoFocus
+                className="input"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search products, pets..."
+                style={{ paddingRight: 44, borderRadius: 24, width: '100%' }}
+              />
+              <button type="submit" style={{
+                position: 'absolute', right: 12, top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none', border: 'none',
+                color: '#F97316', cursor: 'pointer'
+              }}>
+                <Search size={18} />
+              </button>
+            </form>
+          </div>
+        )}
+      </nav>
+
+      {/* Mobile Drawer */}
+      {menuOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setMenuOpen(false)}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(0,0,0,0.35)',
+              zIndex: 200
+            }}
+          />
+
+          {/* Drawer */}
+          <div style={{
+            position: 'fixed', top: 0, right: 0,
+            width: 260, height: '100%',
+            background: '#fff', zIndex: 201,
+            boxShadow: '-4px 0 24px rgba(0,0,0,0.15)',
+            display: 'flex', flexDirection: 'column',
+            overflowY: 'auto'
+          }}>
+            {/* Drawer Header */}
+            <div style={{
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '20px 16px 16px',
+              borderBottom: '1px solid #f0f0f0'
+            }}>
+              {user ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%',
+                    background: '#FFF7F0', border: '2px solid #F97316',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#F97316'
+                  }}>
+                    <User size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: '#111' }}>{user.name}</div>
+                    <div style={{ fontSize: 11, color: '#888' }}>{user.email}</div>
+                  </div>
                 </div>
+              ) : (
+                <span style={{ fontWeight: 700, fontSize: 15, color: '#111' }}>Menu</span>
+              )}
+              <button onClick={() => setMenuOpen(false)} style={{
+                background: 'none', border: 'none',
+                cursor: 'pointer', padding: 4, color: '#555'
+              }}>
+                <X size={22} />
+              </button>
+            </div>
+
+            {/* Drawer Links */}
+            <div style={{ padding: '8px 0', flex: 1 }}>
+              <Link to="/products" onClick={() => setMenuOpen(false)} style={drawerLink}>
+                <Package size={18} style={{ color: '#F97316' }} /> Shop All Products
+              </Link>
+
+              {user && isAdmin && (
+                <Link to="/admin" onClick={() => setMenuOpen(false)} style={{ ...drawerLink, color: '#F97316', fontWeight: 600 }}>
+                  <LayoutDashboard size={18} /> Admin Panel
+                </Link>
+              )}
+
+              {user && (
+                <>
+                  <Link to="/profile" onClick={() => setMenuOpen(false)} style={drawerLink}>
+                    <User size={18} style={{ color: '#F97316' }} /> My Profile
+                  </Link>
+                  <Link to="/orders" onClick={() => setMenuOpen(false)} style={drawerLink}>
+                    <Package size={18} style={{ color: '#F97316' }} /> My Orders
+                  </Link>
+                  <Link to="/wishlist" onClick={() => setMenuOpen(false)} style={drawerLink}>
+                    <Heart size={18} style={{ color: '#F97316' }} /> Wishlist
+                  </Link>
+                </>
               )}
             </div>
-          ) : (
-            <Link to="/login" className="btn btn-primary btn-sm">Login</Link>
-          )}
-        </div>
-      </div>
+
+            {/* Drawer Footer */}
+            <div style={{ padding: '12px 16px', borderTop: '1px solid #f0f0f0' }}>
+              {user ? (
+                <button onClick={handleLogout} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: 8, width: '100%', padding: '12px',
+                  background: '#FEF2F2', border: '1px solid #FECACA',
+                  borderRadius: 10, color: '#EF4444',
+                  fontWeight: 600, fontSize: 14, cursor: 'pointer'
+                }}>
+                  <LogOut size={16} /> Logout
+                </button>
+              ) : (
+                <Link to="/login" onClick={() => setMenuOpen(false)} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '12px', background: '#F97316',
+                  borderRadius: 10, color: '#fff',
+                  fontWeight: 700, fontSize: 14, textDecoration: 'none'
+                }}>
+                  Login / Sign Up
+                </Link>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <style>{`
-        @media(max-width:640px){ .desktop-nav { gap: 4px; } .desktop-nav a[href="/products"] { display: none; } }
+        .mobile-only { display: none !important; }
+        .desktop-search { display: flex !important; }
+        .desktop-only { display: flex !important; }
+        .mobile-spacer { display: none !important; }
+
+        @media (max-width: 640px) {
+          .mobile-only { display: flex !important; }
+          .desktop-search { display: none !important; }
+          .desktop-only { display: none !important; }
+          .brand-name { font-size: 16px !important; }
+          .mobile-spacer { display: block !important; flex: 1; }
+        }
       `}</style>
-    </nav>
+    </>
   );
 }
+
+const drawerLink = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: '14px 20px',
+  fontSize: 15,
+  color: '#1C1C1C',
+  textDecoration: 'none',
+  borderBottom: '1px solid #f9f9f9',
+  fontWeight: 500,
+};
