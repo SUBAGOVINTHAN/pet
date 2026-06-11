@@ -143,7 +143,7 @@ export default function Footer() {
                   lineHeight: "15px",
                 }}
               >
-                dotpetfoods@gmail.com
+                dotpetfoods@gmaillgit add ..com
               </a>
             </p>
           </div>
