@@ -187,7 +187,7 @@ export default function Home() {
             </h2>
             <Link to="/products?featured=true" className="btn btn-outline btn-sm"
               style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: isMobile ? 12 : undefined }}>
-              View All <ArrowRight size={14} />
+              View All <ArrowRight size={isMobile ? 5 : 14} />
             </Link>
           </div>
           <p className="section-subtitle">Handpicked favourites loved by pet owners</p>

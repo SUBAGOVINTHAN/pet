@@ -4,7 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import Select from 'react-select';
 import { State } from 'country-state-city';
 
@@ -170,6 +170,88 @@ const CITY_MAP = {
   'Shahdara': ['Dilshad Garden','Gandhi Nagar','Jhilmil','Shahdara'],
 };
 
+// Inject responsive styles once
+const styles = `
+  .checkout-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 32px;
+    align-items: start;
+  }
+  .checkout-summary-sticky {
+    position: sticky;
+    top: 90px;
+  }
+  .checkout-name-phone-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .checkout-location-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .checkout-summary-toggle {
+    display: none;
+  }
+  .mobile-order-bar {
+    display: none;
+  }
+  @media (max-width: 768px) {
+    .checkout-layout {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    /* On mobile, order summary moves to top via order property */
+    .checkout-form-col { order: 2; }
+    .checkout-summary-col { order: 1; }
+    .checkout-summary-sticky {
+      position: static;
+    }
+    .checkout-name-phone-grid {
+      grid-template-columns: 1fr;
+    }
+    .checkout-location-grid {
+      grid-template-columns: 1fr;
+    }
+    .checkout-summary-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .checkout-summary-items {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .checkout-summary-items.collapsed {
+      max-height: 0 !important;
+    }
+    .mobile-place-order-bar {
+      display: block;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 1px solid #eee;
+      padding: 12px 16px;
+      z-index: 100;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+    }
+    .desktop-place-order { display: none; }
+    .checkout-page-padding { padding-bottom: 80px; }
+  }
+  @media (min-width: 769px) {
+    .mobile-place-order-bar { display: none; }
+    .desktop-place-order { display: block; }
+    .checkout-page-padding { padding-bottom: 0; }
+  }
+`;
+
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
@@ -182,6 +264,7 @@ export default function Checkout() {
   const [districtOptions, setDistrictOptions] = useState([]);
   const [cityOptions,     setCityOptions]     = useState([]);
   const [pincodeLoading,  setPincodeLoading]  = useState(false);
+  const [summaryOpen,     setSummaryOpen]     = useState(false);
 
   const [form, setForm] = useState({
     name:           user?.name  || '',
@@ -201,6 +284,7 @@ export default function Checkout() {
   const shipping    = isTamilNadu ? 0 : 99;
   const tax         = (cartTotal - couponDiscount) * 0.18;
   const total       = cartTotal - couponDiscount + shipping + tax;
+  const estimatedTotal = cartTotal - couponDiscount + 99 + (cartTotal - couponDiscount) * 0.18;
 
   useEffect(() => {
     if (!form.state) { setDistrictOptions([]); setCityOptions([]); return; }
@@ -267,7 +351,6 @@ export default function Checkout() {
     ...f, city: option?.value || '', pincode: '',
   }));
 
-  // ── Load Razorpay script ────────────────────────────────────────────────────
   const loadRazorpay = () =>
     new Promise(resolve => {
       if (window.Razorpay) return resolve(true);
@@ -278,7 +361,6 @@ export default function Checkout() {
       document.body.appendChild(script);
     });
 
-  // ── Handle submit ───────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     const { name, phone, address, city, state, district, pincode } = form;
     if (!name || !phone || !address || !state || !district || !city || !pincode) {
@@ -289,7 +371,6 @@ export default function Checkout() {
     setLoading(true);
 
     try {
-      // 1️⃣ Load Razorpay SDK
       const loaded = await loadRazorpay();
       if (!loaded) {
         toast.error('Razorpay failed to load. Check your internet.');
@@ -297,12 +378,8 @@ export default function Checkout() {
         return;
       }
 
-      // 2️⃣ Create order on backend
-      const { data: rpOrder } = await api.post('/payment/create-order', {
-        amount: total,
-      });
+      const { data: rpOrder } = await api.post('/payment/create-order', { amount: total });
 
-      // 3️⃣ Razorpay options
       const options = {
         key:         import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount:      rpOrder.amount,
@@ -315,24 +392,17 @@ export default function Checkout() {
           email:   form.email,
           contact: form.phone.length === 10 ? `+91${form.phone}` : form.phone,
         },
-        config: {
-          display: {
-            hide: [{ method: 'paylater' }],
-          },
-        },
+        config: { display: { hide: [{ method: 'paylater' }] } },
         theme: { color: '#F97316' },
 
-        // 4️⃣ Success callback
         handler: async (response) => {
           try {
-            // 5️⃣ Verify signature
             await api.post('/payment/verify', {
               razorpay_order_id:   response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature:  response.razorpay_signature,
             });
 
-            // 6️⃣ Save order to DB
             const { data } = await api.post('/orders', {
               shipping:          { ...form, state: form.stateLabel },
               payment_method:    'razorpay',
@@ -364,7 +434,6 @@ export default function Checkout() {
         },
       };
 
-      // 5️⃣ Open Razorpay popup ← only ONE rzp here
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', (response) => {
         toast.error('Payment failed: ' + response.error.description);
@@ -404,216 +473,298 @@ export default function Checkout() {
         maxLength={key === 'phone' ? 10 : undefined}
         onInput={e => { if (key === 'phone') e.target.value = e.target.value.replace(/[^0-9]/g, '') }}
         onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+        style={{ fontSize: 16 /* prevents iOS zoom on focus */ }}
       />
     </div>
   );
 
-  // ── Main render ─────────────────────────────────────────────────────────────
-  return (
-    <div className="container section" style={{ paddingTop: 32 }}>
-      <h1 style={{ fontWeight: 700, fontSize: 28, marginBottom: 32 }}>Checkout</h1>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 32 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-          {/* Shipping Information */}
-          <div className="card" style={{ padding: 24 }}>
-            <h3 style={{ fontWeight: 700, marginBottom: 20 }}>Shipping Information</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              {inp('Full Name', 'name')}
-              {inp('Phone', 'phone', 'tel')}
-            </div>
-            <div style={{ marginTop: 16 }}>{inp('Email', 'email', 'email')}</div>
-            <div style={{ marginTop: 16 }}>{inp('Address', 'address')}</div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
-              <div>
-                <label style={labelStyle}>State <span style={{ color: 'red' }}>*</span></label>
-                <Select
-                  options={STATE_OPTIONS}
-                  value={form.state ? { value: form.state, label: form.stateLabel } : null}
-                  onChange={handleStateChange}
-                  placeholder="Search state..."
-                  isClearable isSearchable
-                  menuPortalTarget={document.body}
-                  styles={selectStyles(!!form.state, false)}
-                />
-                {form.state && (
-                  <div style={{
-                    marginTop: 6, fontSize: 11, fontWeight: 600, padding: '3px 8px',
-                    borderRadius: 6, display: 'inline-block',
-                    background: isTamilNadu ? '#D1FAE5' : '#FEF3C7',
-                    color:      isTamilNadu ? '#065F46' : '#92400E',
-                  }}>
-                    {isTamilNadu ? '🎉 Free shipping for Tamil Nadu!' : '📦 ₹99 shipping for this state'}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label style={labelStyle}>District <span style={{ color: 'red' }}>*</span></label>
-                <Select
-                  options={districtOptions}
-                  value={form.district ? { value: form.district, label: form.district } : null}
-                  onChange={handleDistrictChange}
-                  placeholder={form.state ? 'Search district...' : 'Select state first'}
-                  isClearable isSearchable
-                  isDisabled={!form.state}
-                  menuPortalTarget={document.body}
-                  styles={selectStyles(!!form.district, !form.state)}
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>City <span style={{ color: 'red' }}>*</span></label>
-                <Select
-                  options={cityOptions}
-                  value={form.city ? { value: form.city, label: form.city } : null}
-                  onChange={handleCityChange}
-                  placeholder={
-                    !form.state    ? 'Select state first'    :
-                    !form.district ? 'Select district first' :
-                    'Search city...'
-                  }
-                  isClearable isSearchable
-                  isDisabled={!form.district}
-                  menuPortalTarget={document.body}
-                  styles={selectStyles(!!form.city, !form.district)}
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Pincode <span style={{ color: 'red' }}>*</span></label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    className="input" type="text" maxLength={6}
-                    value={form.pincode}
-                    placeholder={pincodeLoading ? 'Fetching...' : 'Auto-filled / Enter manually'}
-                    onChange={e => setForm(f => ({ ...f, pincode: e.target.value.replace(/[^0-9]/g, '') }))}
-                    style={{
-                      background: form.pincode ? '#f0fdf4' : undefined,
-                      transition: 'background 0.3s',
-                      paddingRight: pincodeLoading ? 36 : undefined,
-                    }}
-                  />
-                  {pincodeLoading && (
-                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#F97316' }}>⏳</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 16 }}>
-              <label style={labelStyle}>Notes</label>
-              <textarea
-                className="input" rows={2} value={form.notes}
-                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                style={{ resize: 'vertical' }}
-              />
-            </div>
+  // ── Order summary content (shared between sidebar & mobile panel) ───────────
+  const OrderSummaryContent = () => (
+    <>
+      <div style={{ maxHeight: 200, overflowY: 'auto', marginBottom: 16 }}>
+        {cartItems.map(i => (
+          <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 8 }}>
+            <span style={{ color: '#555', marginRight: 8, flex: 1 }}>{i.name} × {i.quantity}</span>
+            <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>₹{((i.discount_price || i.price) * i.quantity).toFixed(0)}</span>
           </div>
+        ))}
+      </div>
 
-          {/* Payment Method */}
-          <div className="card" style={{ padding: 24 }}>
-            <h3 style={{ fontWeight: 700, marginBottom: 20 }}>Payment Method</h3>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '16px', border: '2px solid #F97316',
-              borderRadius: 10, background: '#FFF7F0',
-            }}>
-              <img
-                src="https://razorpay.com/favicon.ico"
-                alt="Razorpay" width={24} height={24}
-                style={{ borderRadius: 4 }}
-              />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>Pay via Razorpay</div>
-                <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>
-                  UPI · Cards · NetBanking · Wallets
-                </div>
-              </div>
-              <span style={{
-                fontSize: 11, background: '#D1FAE5', color: '#065F46',
-                padding: '3px 10px', borderRadius: 20, fontWeight: 700,
-              }}>
-                🔒 100% Secure
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid #eee', paddingTop: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+          <span style={{ color: '#555' }}>Subtotal</span>
+          <span>₹{cartTotal.toFixed(2)}</span>
+        </div>
+
+        {couponDiscount > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#10B981' }}>
+            <span>Discount</span>
+            <span>-₹{couponDiscount.toFixed(2)}</span>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+          <span style={{ color: '#555' }}>Shipping</span>
+          <div style={{ textAlign: 'right' }}>
+            {!form.state ? (
+              <span style={{ color: '#9CA3AF', fontSize: 12 }}>TN: Free | Others: ₹99</span>
+            ) : (
+              <span style={{ fontWeight: 600, color: isTamilNadu ? '#10B981' : '#1C1C1C' }}>
+                {isTamilNadu ? 'FREE 🎉' : '₹99'}
               </span>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Order Summary */}
-        <div>
-          <div className="card" style={{ padding: 24, position: 'sticky', top: 90 }}>
-            <h3 style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }}>Order Summary</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+          <span style={{ color: '#555' }}>GST (18%)</span>
+          <span>₹{tax.toFixed(2)}</span>
+        </div>
 
-            <div style={{ maxHeight: 200, overflowY: 'auto', marginBottom: 16 }}>
-              {cartItems.map(i => (
-                <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 8 }}>
-                  <span style={{ color: '#555' }}>{i.name} × {i.quantity}</span>
-                  <span style={{ fontWeight: 600 }}>₹{((i.discount_price || i.price) * i.quantity).toFixed(0)}</span>
-                </div>
-              ))}
-            </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 18, borderTop: '1.5px dashed #eee', paddingTop: 12 }}>
+          <span>Total</span>
+          <span style={{ color: '#F97316' }}>
+            {!form.state
+              ? `₹${estimatedTotal.toFixed(2)}*`
+              : `₹${total.toFixed(2)}`}
+          </span>
+        </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid #eee', paddingTop: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                <span style={{ color: '#555' }}>Subtotal</span>
-                <span>₹{cartTotal.toFixed(2)}</span>
+        {!form.state && (
+          <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: -4 }}>
+            * Estimated. Select state for exact amount.
+          </p>
+        )}
+      </div>
+    </>
+  );
+
+  // ── Main render ─────────────────────────────────────────────────────────────
+  return (
+    <>
+      <style>{styles}</style>
+
+      <div className="container section checkout-page-padding" style={{ paddingTop: 24 }}>
+        <h1 style={{ fontWeight: 700, fontSize: 24, marginBottom: 24 }}>Checkout</h1>
+
+        <div className="checkout-layout">
+
+          {/* ── Left: Form ── */}
+          <div className="checkout-form-col" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            {/* Shipping Information */}
+            <div className="card" style={{ padding: 20 }}>
+              <h3 style={{ fontWeight: 700, marginBottom: 16, fontSize: 16 }}>Shipping Information</h3>
+
+              <div className="checkout-name-phone-grid">
+                {inp('Full Name', 'name')}
+                {inp('Phone', 'phone', 'tel')}
               </div>
 
-              {couponDiscount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#10B981' }}>
-                  <span>Discount</span>
-                  <span>-₹{couponDiscount.toFixed(2)}</span>
-                </div>
-              )}
+              <div style={{ marginTop: 16 }}>{inp('Email', 'email', 'email')}</div>
+              <div style={{ marginTop: 16 }}>{inp('Address', 'address')}</div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                <span style={{ color: '#555' }}>Shipping</span>
-                <div style={{ textAlign: 'right' }}>
-                  {!form.state ? (
-                    <span style={{ color: '#9CA3AF', fontSize: 12 }}>TN: Free | Others: ₹99</span>
-                  ) : (
-                    <span style={{ fontWeight: 600, color: isTamilNadu ? '#10B981' : '#1C1C1C' }}>
-                      {isTamilNadu ? 'FREE 🎉' : '₹99'}
-                    </span>
+              <div className="checkout-location-grid">
+                <div>
+                  <label style={labelStyle}>State <span style={{ color: 'red' }}>*</span></label>
+                  <Select
+                    options={STATE_OPTIONS}
+                    value={form.state ? { value: form.state, label: form.stateLabel } : null}
+                    onChange={handleStateChange}
+                    placeholder="Search state..."
+                    isClearable isSearchable
+                    menuPortalTarget={document.body}
+                    styles={selectStyles(!!form.state, false)}
+                  />
+                  {form.state && (
+                    <div style={{
+                      marginTop: 6, fontSize: 11, fontWeight: 600, padding: '3px 8px',
+                      borderRadius: 6, display: 'inline-block',
+                      background: isTamilNadu ? '#D1FAE5' : '#FEF3C7',
+                      color:      isTamilNadu ? '#065F46' : '#92400E',
+                    }}>
+                      {isTamilNadu ? '🎉 Free shipping!' : '📦 ₹99 shipping'}
+                    </div>
                   )}
                 </div>
+
+                <div>
+                  <label style={labelStyle}>District <span style={{ color: 'red' }}>*</span></label>
+                  <Select
+                    options={districtOptions}
+                    value={form.district ? { value: form.district, label: form.district } : null}
+                    onChange={handleDistrictChange}
+                    placeholder={form.state ? 'Search district...' : 'Select state first'}
+                    isClearable isSearchable
+                    isDisabled={!form.state}
+                    menuPortalTarget={document.body}
+                    styles={selectStyles(!!form.district, !form.state)}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>City <span style={{ color: 'red' }}>*</span></label>
+                  <Select
+                    options={cityOptions}
+                    value={form.city ? { value: form.city, label: form.city } : null}
+                    onChange={handleCityChange}
+                    placeholder={
+                      !form.state    ? 'Select state first'    :
+                      !form.district ? 'Select district first' :
+                      'Search city...'
+                    }
+                    isClearable isSearchable
+                    isDisabled={!form.district}
+                    menuPortalTarget={document.body}
+                    styles={selectStyles(!!form.city, !form.district)}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Pincode <span style={{ color: 'red' }}>*</span></label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      className="input" type="text" maxLength={6}
+                      value={form.pincode}
+                      placeholder={pincodeLoading ? 'Fetching...' : 'Auto-filled / Enter manually'}
+                      onChange={e => setForm(f => ({ ...f, pincode: e.target.value.replace(/[^0-9]/g, '') }))}
+                      style={{
+                        background: form.pincode ? '#f0fdf4' : undefined,
+                        transition: 'background 0.3s',
+                        paddingRight: pincodeLoading ? 36 : undefined,
+                        fontSize: 16,
+                      }}
+                    />
+                    {pincodeLoading && (
+                      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#F97316' }}>⏳</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                <span style={{ color: '#555' }}>GST (18%)</span>
-                <span>₹{tax.toFixed(2)}</span>
+              <div style={{ marginTop: 16 }}>
+                <label style={labelStyle}>Notes</label>
+                <textarea
+                  className="input" rows={2} value={form.notes}
+                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                  style={{ resize: 'vertical', fontSize: 16 }}
+                />
               </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 18, borderTop: '1.5px dashed #eee', paddingTop: 12 }}>
-                <span>Total</span>
-                <span style={{ color: '#F97316' }}>
-                  {!form.state
-                    ? `₹${(cartTotal - couponDiscount + 99 + (cartTotal - couponDiscount) * 0.18).toFixed(2)}*`
-                    : `₹${total.toFixed(2)}`}
-                </span>
-              </div>
-
-              {!form.state && (
-                <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: -4 }}>
-                  * Estimated total. Select state for exact amount.
-                </p>
-              )}
             </div>
 
-            <button
-              className="btn btn-primary"
-              style={{ width: '100%', justifyContent: 'center', padding: 14, marginTop: 20, fontSize: 15 }}
-              onClick={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? 'Placing Order...' : '🐾 Place Order'}
-            </button>
+            {/* Payment Method */}
+            <div className="card" style={{ padding: 20 }}>
+              <h3 style={{ fontWeight: 700, marginBottom: 16, fontSize: 16 }}>Payment Method</h3>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '14px', border: '2px solid #F97316',
+                borderRadius: 10, background: '#FFF7F0',
+              }}>
+                <img
+                  src="https://razorpay.com/favicon.ico"
+                  alt="Razorpay" width={24} height={24}
+                  style={{ borderRadius: 4, flexShrink: 0 }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>Pay via Razorpay</div>
+                  <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>
+                    UPI · Cards · NetBanking · Wallets
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: 11, background: '#D1FAE5', color: '#065F46',
+                  padding: '3px 8px', borderRadius: 20, fontWeight: 700,
+                  whiteSpace: 'nowrap', flexShrink: 0,
+                }}>
+                  🔒 Secure
+                </span>
+              </div>
+            </div>
+
+            {/* Desktop Place Order button (inside form col, hidden on mobile) */}
+            <div className="desktop-place-order" style={{ display: 'none' }} />
+          </div>
+
+          {/* ── Right: Order Summary ── */}
+          <div className="checkout-summary-col">
+            <div className="card checkout-summary-sticky" style={{ padding: 20 }}>
+
+              {/* Mobile: collapsible header */}
+              <div
+                className="checkout-summary-toggle"
+                onClick={() => setSummaryOpen(o => !o)}
+                style={{ marginBottom: summaryOpen ? 16 : 0 }}
+              >
+                <div>
+                  <span style={{ fontWeight: 700, fontSize: 16 }}>Order Summary</span>
+                  <span style={{ fontSize: 13, color: '#9CA3AF', marginLeft: 8 }}>
+                    ({cartItems.length} item{cartItems.length !== 1 ? 's' : ''})
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontWeight: 700, color: '#F97316', fontSize: 16 }}>
+                    {!form.state ? `₹${estimatedTotal.toFixed(0)}*` : `₹${total.toFixed(0)}`}
+                  </span>
+                  {summaryOpen ? <ChevronUp size={18} color="#9CA3AF" /> : <ChevronDown size={18} color="#9CA3AF" />}
+                </div>
+              </div>
+
+              {/* Desktop: always-visible header */}
+              <h3 style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }} className="checkout-summary-desktop-title">
+                Order Summary
+              </h3>
+
+              <div
+                className={`checkout-summary-items${summaryOpen ? '' : ' collapsed'}`}
+                style={{ maxHeight: summaryOpen ? 600 : undefined }}
+              >
+                <OrderSummaryContent />
+              </div>
+
+              {/* Desktop place order */}
+              <button
+                className="btn btn-primary desktop-place-order"
+                style={{ width: '100%', justifyContent: 'center', padding: 14, marginTop: 20, fontSize: 15 }}
+                onClick={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? 'Placing Order...' : '🐾 Place Order'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* ── Mobile sticky bottom bar ── */}
+      <div className="mobile-place-order-bar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, color: '#9CA3AF' }}>Total</div>
+            <div style={{ fontWeight: 700, fontSize: 18, color: '#F97316' }}>
+              {!form.state ? `₹${estimatedTotal.toFixed(0)}*` : `₹${total.toFixed(0)}`}
+            </div>
+          </div>
+          <button
+            className="btn btn-primary"
+            style={{ flex: 2, justifyContent: 'center', padding: '12px 16px', fontSize: 15 }}
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? 'Placing...' : '🐾 Place Order'}
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @media (min-width: 769px) {
+          .checkout-summary-desktop-title { display: block !important; }
+          .checkout-summary-items { max-height: none !important; }
+        }
+        @media (max-width: 768px) {
+          .checkout-summary-desktop-title { display: none !important; }
+          .desktop-place-order { display: none !important; }
+        }
+      `}</style>
+    </>
   );
 }

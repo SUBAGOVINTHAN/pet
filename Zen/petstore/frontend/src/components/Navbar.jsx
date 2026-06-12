@@ -38,7 +38,12 @@ export default function Navbar() {
     }
   };
 
-  const handleLogout = () => { logout(); navigate('/'); setUserMenu(false); setMenuOpen(false); };
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    setUserMenu(false);
+    setMenuOpen(false);
+  };
 
   return (
     <>
@@ -47,14 +52,21 @@ export default function Navbar() {
         boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
         position: 'sticky',
         top: 0,
-        zIndex: 100
+        zIndex: 100,
+        width: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden'   /* ✅ nothing can bleed outside nav */
       }}>
-        <div className="container" style={{
+        {/* ✅ Removed "container" class — it adds its own padding/max-width
+            that fights with mobile layout. We control padding ourselves. */}
+        <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
           height: 64,
-          padding: '0 16px'   /* ✅ consistent 16px on both sides */
+          width: '100%',
+          boxSizing: 'border-box',
+          padding: '0 16px',
+          gap: 8
         }}>
 
           {/* Logo */}
@@ -85,14 +97,15 @@ export default function Navbar() {
             flex: 1,
             display: 'flex',
             maxWidth: 420,
-            position: 'relative'
+            position: 'relative',
+            marginLeft: 8
           }}>
             <input
               className="input"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search products, pets..."
-              style={{ paddingRight: 44, borderRadius: 24 }}
+              style={{ paddingRight: 44, borderRadius: 24, width: '100%' }}
             />
             <button type="submit" style={{
               position: 'absolute', right: 12, top: '50%',
@@ -104,11 +117,16 @@ export default function Navbar() {
             </button>
           </form>
 
-          {/* Spacer */}
+          {/* Spacer — pushes icons to the right on mobile */}
           <div style={{ flex: 1 }} className="mobile-spacer" />
 
           {/* Right Side Icons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0,
+            flexShrink: 0   /* ✅ icon group never shrinks or wraps */
+          }}>
 
             {/* Mobile Search Toggle */}
             <button
@@ -116,7 +134,7 @@ export default function Navbar() {
               onClick={() => setSearchOpen(!searchOpen)}
               style={{
                 background: 'none', border: 'none',
-                padding: 8, color: '#555', cursor: 'pointer',
+                padding: '8px 6px', color: '#555', cursor: 'pointer',
                 display: 'flex', alignItems: 'center'
               }}
             >
@@ -125,7 +143,7 @@ export default function Navbar() {
 
             {/* Wishlist */}
             <Link to="/wishlist" style={{
-              position: 'relative', padding: 8,
+              position: 'relative', padding: '8px 6px',
               color: '#555', display: 'flex'
             }}>
               <Heart size={22} />
@@ -133,7 +151,7 @@ export default function Navbar() {
 
             {/* Cart */}
             <Link to="/cart" style={{
-              position: 'relative', padding: 8,
+              position: 'relative', padding: '8px 6px',
               color: '#555', display: 'flex'
             }}>
               <ShoppingCart size={22} />
@@ -147,7 +165,7 @@ export default function Navbar() {
 
             {/* Desktop User Menu */}
             {user ? (
-              <div className="desktop-only" style={{ position: 'relative' }} ref={userMenuRef}>
+              <div className="desktop-only" style={{ position: 'relative', marginLeft: 4 }} ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenu(!userMenu)}
                   style={{
@@ -204,26 +222,28 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <Link to="/login" className="btn btn-primary btn-sm desktop-only">Login</Link>
+              <Link to="/login" className="btn btn-primary btn-sm desktop-only" style={{ marginLeft: 4 }}>Login</Link>
             )}
 
-            {/* Mobile Hamburger — ✅ marginRight: 4 fixes the edge-touching issue */}
+            {/* ✅ Mobile Hamburger — last item, always fully visible */}
             <button
               className="mobile-only"
               onClick={() => setMenuOpen(!menuOpen)}
               style={{
                 background: 'none', border: 'none',
-                padding: 8, color: '#333', cursor: 'pointer',
+                padding: '8px 0 8px 6px',
+                color: '#333', cursor: 'pointer',
                 display: 'flex', alignItems: 'center',
-                marginRight: 4   /* ✅ FIX: pulls icon away from screen edge */
+                flexShrink: 0
               }}
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
+
           </div>
         </div>
 
-        {/* Mobile Search Bar — slides down */}
+        {/* Mobile Search Bar */}
         {searchOpen && (
           <div ref={searchRef} className="mobile-only" style={{
             padding: '8px 16px 12px',
@@ -236,7 +256,7 @@ export default function Navbar() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search products, pets..."
-                style={{ paddingRight: 44, borderRadius: 24, width: '100%' }}
+                style={{ paddingRight: 44, borderRadius: 24, width: '100%', boxSizing: 'border-box' }}
               />
               <button type="submit" style={{
                 position: 'absolute', right: 12, top: '50%',
@@ -254,7 +274,6 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {menuOpen && (
         <>
-          {/* Backdrop */}
           <div
             onClick={() => setMenuOpen(false)}
             style={{
@@ -264,7 +283,6 @@ export default function Navbar() {
             }}
           />
 
-          {/* Drawer */}
           <div style={{
             position: 'fixed', top: 0, right: 0,
             width: 260, height: '100%',
@@ -370,7 +388,7 @@ export default function Navbar() {
           .mobile-only { display: flex !important; }
           .desktop-search { display: none !important; }
           .desktop-only { display: none !important; }
-          .brand-name { font-size: 16px !important; }
+          .brand-name { font-size: 15px !important; }
           .mobile-spacer { display: block !important; flex: 1; }
         }
       `}</style>
