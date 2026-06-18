@@ -1,8 +1,9 @@
--- MySQL dump 10.13  Distrib 8.0.40, for Win64 (x86_64)
+
+-- MySQL dump 10.13  Distrib 8.0.46, for Win64 (x86_64)
 --
--- Host: localhost    Database: petstore_db
+-- Host: localhost    Database: pet
 -- ------------------------------------------------------
--- Server version	8.0.40
+-- Server version	8.0.46
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -33,7 +34,7 @@ CREATE TABLE `cart` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `cart_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `cart_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,7 +43,6 @@ CREATE TABLE `cart` (
 
 LOCK TABLES `cart` WRITE;
 /*!40000 ALTER TABLE `cart` DISABLE KEYS */;
-INSERT INTO `cart` VALUES (1,2,1,1,'2026-04-13 05:49:15'),(2,5,1,1,'2026-04-13 12:44:48');
 /*!40000 ALTER TABLE `cart` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -71,7 +71,7 @@ CREATE TABLE `categories` (
 
 LOCK TABLES `categories` WRITE;
 /*!40000 ALTER TABLE `categories` DISABLE KEYS */;
-INSERT INTO `categories` VALUES (1,'Dog Food','dog-food','Premium nutrition for your dogs','/uploads/cat-dog-food.jpg','2026-04-13 05:17:28'),(2,'Cat Food','cat-food','Delicious food for cats','/uploads/cat-cat-food.jpg','2026-04-13 05:17:28'),(3,'Bird Supplies','bird-supplies','Everything for your birds','/uploads/cat-bird.jpg','2026-04-13 05:17:28'),(4,'Pet Accessories','pet-accessories','Toys, beds, and more','/uploads/cat-accessories.jpg','2026-04-13 05:17:28'),(5,'Health & Wellness','health-wellness','Vitamins and medicines','/uploads/cat-health.jpg','2026-04-13 05:17:28'),(6,'Grooming','grooming','Grooming tools and products','/uploads/cat-grooming.jpg','2026-04-13 05:17:28');
+INSERT INTO `categories` VALUES (1,'Pet Foods','dog-food','Premium nutrition for your dogs','/uploads/cat-dog-food.jpg','2026-04-13 05:17:28'),(2,'Aquarium','cat-food','Delicious food for cats','/uploads/cat-cat-food.jpg','2026-04-13 05:17:28'),(3,'Pets','bird-supplies','Everything for your birds','/uploads/cat-bird.jpg','2026-04-13 05:17:28'),(4,'Pet Accessories','pet-accessories','Toys, beds, and more','/uploads/cat-accessories.jpg','2026-04-13 05:17:28'),(5,'Health & Wellness','health-wellness','Vitamins and medicines','/uploads/cat-health.jpg','2026-04-13 05:17:28'),(6,'Grooming','grooming','Grooming tools and products','/uploads/cat-grooming.jpg','2026-04-13 05:17:28');
 /*!40000 ALTER TABLE `categories` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -212,7 +212,7 @@ CREATE TABLE `products` (
   UNIQUE KEY `slug` (`slug`),
   KEY `category_id` (`category_id`),
   CONSTRAINT `products_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -221,7 +221,7 @@ CREATE TABLE `products` (
 
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (1,'Premium Dog Kibble','premium-dog-kibble','High protein, grain-free dog food for adult dogs. Made with real chicken and vegetables.',1299.00,999.00,50,1,'/uploads/product1.jpg',NULL,0.00,0,1,1,'dog','2026-04-13 05:17:28','2026-04-13 05:17:28'),(2,'Royal Canin Cat Food','royal-canin-cat-food','Scientifically formulated cat food for indoor cats with optimal digestive health.',899.00,749.00,80,2,'/uploads/product2.jpg',NULL,0.00,0,1,1,'cat','2026-04-13 05:17:28','2026-04-13 05:17:28'),(3,'Parrot Seed Mix','parrot-seed-mix','Nutritious seed mix for parrots with sunflower seeds, millet, and more.',499.00,NULL,100,3,'/uploads/product3.jpg',NULL,0.00,0,0,1,'bird','2026-04-13 05:17:28','2026-04-13 05:17:28'),(4,'Dog Chew Toy Set','dog-chew-toy-set','Durable rubber chew toys for medium to large dogs. Non-toxic and safe.',699.00,549.00,60,4,'/uploads/product4.jpg',NULL,0.00,0,1,1,'dog','2026-04-13 05:17:28','2026-04-13 05:17:28'),(5,'Cat Scratching Post','cat-scratching-post','Tall sisal rope scratching post with cozy top perch for cats.',1499.00,1199.00,30,4,'/uploads/product1.jpg',NULL,0.00,0,1,1,'cat','2026-04-13 05:17:28','2026-04-13 05:17:28'),(6,'Pet Vitamin Drops','pet-vitamin-drops','Multi-vitamin supplement for dogs and cats. Supports immunity and coat health.',399.00,NULL,200,5,'/uploads/product2.jpg',NULL,0.00,0,0,1,'other','2026-04-13 05:17:28','2026-04-13 05:17:28'),(7,'Dog Shampoo','dog-shampoo','Gentle, tear-free shampoo for dogs. Leaves coat shiny and fresh.',299.00,249.00,150,6,'/uploads/product3.jpg',NULL,0.00,0,0,1,'dog','2026-04-13 05:17:28','2026-04-13 05:17:28'),(8,'Automatic Pet Feeder','automatic-pet-feeder','Programmable auto feeder for cats and dogs. Holds up to 5L of dry food.',2999.00,2499.00,25,4,'/uploads/product4.jpg',NULL,0.00,0,1,1,'other','2026-04-13 05:17:28','2026-04-13 05:17:28');
+INSERT INTO `products` VALUES (1,'Premium Dog Kibble 250g','premium-dog-kibble','High protein, grain-free dog food for adult dogs. Made with real chicken and vegetables.',1299.00,1.00,39,2,'/uploads/1776604940083.jpeg',NULL,5.00,1,1,1,'dog','2026-04-13 05:17:28','2026-06-12 09:46:54'),(2,'Royal Canin Cat Food','royal-canin-cat-food','Scientifically formulated cat food for indoor cats with optimal digestive health.',899.00,749.00,75,2,'/uploads/1776604953259.jpeg',NULL,0.00,0,1,1,'cat','2026-04-13 05:17:28','2026-06-09 16:07:23'),(3,'Parrot Seed Mix','parrot-seed-mix','Nutritious seed mix for parrots with sunflower seeds, millet, and more.',499.00,NULL,95,3,'/uploads/1776604967342.jpeg',NULL,0.00,0,1,1,'bird','2026-04-13 05:17:28','2026-06-12 07:11:52'),(4,'Dog Chew Toy Set','dog-chew-toy-set','Durable rubber chew toys for medium to large dogs. Non-toxic and safe.',699.00,549.00,58,4,'/uploads/1776604980271.jpeg',NULL,0.00,0,1,1,'dog','2026-04-13 05:17:28','2026-06-09 15:50:57'),(5,'Cat Scratching Post','cat-scratching-post','Tall sisal rope scratching post with cozy top perch for cats.',1499.00,1199.00,29,4,'/uploads/1776604999479.jpeg',NULL,5.00,1,1,1,'cat','2026-04-13 05:17:28','2026-06-09 07:39:36'),(6,'Pet Vitamin Drops','pet-vitamin-drops','Multi-vitamin supplement for dogs and cats. Supports immunity and coat health.',399.00,NULL,200,5,'/uploads/1776605016295.jpeg',NULL,0.00,0,1,1,'other','2026-04-13 05:17:28','2026-04-19 13:23:36'),(7,'Dog Shampoo','dog-shampoo','Gentle, tear-free shampoo for dogs. Leaves coat shiny and fresh.',299.00,249.00,150,6,'/uploads/1776605031840.jpeg',NULL,0.00,0,1,1,'dog','2026-04-13 05:17:28','2026-04-19 13:23:51'),(8,'Automatic Pet Feeder','automatic-pet-feeder','Programmable auto feeder for cats and dogs. Holds up to 5L of dry food.',2999.00,2499.00,25,4,'/uploads/1776605052183.jpeg',NULL,0.00,0,1,1,'other','2026-04-13 05:17:28','2026-04-19 13:24:12'),(9,'chick','chick-1781070252826','chick chick',40.00,20.00,47,6,'/uploads/1781070252815.jpeg',NULL,3.00,1,1,1,'bird','2026-06-10 05:44:12','2026-06-12 05:12:23');
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -256,26 +256,6 @@ LOCK TABLES `reviews` WRITE;
 /*!40000 ALTER TABLE `reviews` DISABLE KEYS */;
 /*!40000 ALTER TABLE `reviews` ENABLE KEYS */;
 UNLOCK TABLES;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `update_product_rating` AFTER INSERT ON `reviews` FOR EACH ROW BEGIN
-  UPDATE products SET 
-    rating = (SELECT AVG(rating) FROM reviews WHERE product_id = NEW.product_id),
-    reviews_count = (SELECT COUNT(*) FROM reviews WHERE product_id = NEW.product_id)
-  WHERE id = NEW.product_id;
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `users`
@@ -298,9 +278,11 @@ CREATE TABLE `users` (
   `avatar` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `otp` varchar(6) DEFAULT NULL,
+  `otp_expires` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -309,7 +291,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (2,'suba','subalakshmi272@gmail.com','$2a$10$oSgTk1jVSm058q5rD84WRuFIIa.X3yhwhYXU0iYfcTsKyyiw09BX2','user','9626081301',NULL,NULL,NULL,NULL,NULL,'2026-04-13 05:47:12','2026-04-13 05:47:12'),(4,'Admin User','admin@petstore.com','$2b$10$jHMOuDVHj3LxCNnT8yWwMOl9/wFiAd/hhUfv7B.OcLuRjC4Gq5Qqm','admin',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-13 06:12:56','2026-04-13 06:12:56'),(5,'naveen','rnaveenkumar024@gmail.com','$2a$10$izYdsGNgwRB9JvDwRPy1..yYKYMlZF8YieCYyXflFlUmg3JN2Mk7a','user',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-13 12:44:39','2026-04-13 12:44:39');
+INSERT INTO `users` VALUES (2,'suba','subalakshmi2172@gmail.com','$2a$10$oSgTk1jVSm058q5rD84WRuFIIa.X3yhwhYXU0iYfcTsKyyiw09BX2','user','9626081301',NULL,NULL,NULL,NULL,NULL,'2026-04-13 05:47:12','2026-04-19 13:33:20',NULL,NULL),(5,'naveen','rnaveenkumar024@gmail.com','$2a$10$XLHpNmojfrOzqw2FflEJzOBxMuGF7FzBnOOPokhscsr75hSMXmbXC','user',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-13 12:44:39','2026-06-09 07:42:49',NULL,NULL),(6,'suba','subalakshmi11122002@gmail.com','$2a$10$Wbqi4aPWxFIadYoRlMXH5ut1GsDxOMYZh3WX8EVTRVObWD4F.c90e','user','9626081301',NULL,NULL,NULL,NULL,NULL,'2026-04-13 14:39:08','2026-04-13 14:39:08',NULL,NULL),(7,'Admin User','dotpetfoodsorder@gmail.com','$2a$10$aDASErT1a/isKGBL/WROluZb8.w./LFvXS71eH8Ap8pNIkTCAGskm','admin','916369614154',NULL,NULL,NULL,NULL,NULL,'2026-04-13 15:16:52','2026-06-11 09:37:58',NULL,NULL),(8,'suba','subalakshmi272@gmail.com','$2a$10$413qt/.Mg18bMTT1oVW4gezlGmtltw9V8vW0L5cWi2ShWQ8n55VCm','user',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-19 13:34:05','2026-06-09 04:48:10',NULL,NULL),(9,'nk','zencarft024@gmail.com','$2a$10$ZKZl.6Upl0LlWiVl4mT6O.R5jNqrfPZkXXakJDNtXcS3FEGp4AmnK','user',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-21 12:57:41','2026-04-21 12:57:41',NULL,NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -341,14 +323,6 @@ LOCK TABLES `wishlist` WRITE;
 /*!40000 ALTER TABLE `wishlist` DISABLE KEYS */;
 /*!40000 ALTER TABLE `wishlist` ENABLE KEYS */;
 UNLOCK TABLES;
-
---
--- Dumping events for database 'petstore_db'
---
-
---
--- Dumping routines for database 'petstore_db'
---
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -359,4 +333,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-13 19:33:59
+-- Dump completed on 2026-06-13 17:16:48

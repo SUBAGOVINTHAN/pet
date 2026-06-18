@@ -230,7 +230,7 @@ export function Orders() {
                     >
                       View Details
                     </Link>
-                    <button
+                    {/* <button
                       onClick={() => downloadInvoice(order.id, order.order_number)}
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
@@ -241,7 +241,7 @@ export function Orders() {
                       }}
                     >
                       <Download size={13} /> Invoice
-                    </button>
+                    </button> */}
                   </div>
                 </div>
 
@@ -298,7 +298,7 @@ export function OrderDetail() {
           </Link>
 
           {/* Desktop invoice button */}
-          <button
+          {/* <button
             className="invoice-btn-desktop"
             onClick={() => downloadInvoice(order.id, order.order_number)}
             style={{
@@ -310,7 +310,7 @@ export function OrderDetail() {
             }}
           >
             <Download size={16} /> Download Invoice
-          </button>
+          </button> */}
         </div>
 
         {/* Mobile: full-width invoice button */}
