@@ -5,13 +5,7 @@ import { useCart } from '../context/CartContext';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-
-const resolveImage = (imgPath) => {
-  if (!imgPath) return null;
-  if (imgPath.startsWith('http') || imgPath.startsWith('blob')) return imgPath;
-  const clean = imgPath.startsWith('/') ? imgPath : '/' + imgPath;
-  return `http://localhost:5000${clean}`;
-};
+import { resolveImage } from '../utils/resolveImage';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
