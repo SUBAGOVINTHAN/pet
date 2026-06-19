@@ -18,7 +18,7 @@
   // };
 
 
-  const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+ const BASE_URL = import.meta.env.VITE_API_URL || 'https://pet-diuj.onrender.com';
 const getImageUrl = (imgPath) => {
   if (!imgPath) return null;
   if (imgPath.startsWith('http')) return imgPath;
