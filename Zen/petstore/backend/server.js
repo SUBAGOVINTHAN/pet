@@ -25,11 +25,13 @@ if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://pet.vasudevantechnologies.com',  
+    'https://pet.vasudevantechnologies.com',
+    'https://www.dotpetfoods.com',
+    'https://dotpetfoods.com',
+    'https://pet-zen24.vercel.app'
   ],
   credentials: true,
 }));
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
