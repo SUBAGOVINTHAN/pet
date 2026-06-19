@@ -5,6 +5,7 @@ import api from '../utils/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { resolveImage } from '../utils/resolveImage';
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -49,9 +50,11 @@ export default function ProductDetail() {
     ? Math.round((1 - product.discount_price / product.price) * 100)
     : null;
 
-  const imageUrl = product.image
-    ? (product.image.startsWith('http') ? product.image : `http://localhost:5000${product.image}`)
-    : null;
+  // const imageUrl = product.image
+  //   ? (product.image.startsWith('http') ? product.image : `http://localhost:5000${product.image}`)
+  //   : null;
+
+  const imageUrl = resolveImage(product.image);
 
   return (
     <div className="container" style={{ paddingTop: 24, paddingBottom: 48 }}>
