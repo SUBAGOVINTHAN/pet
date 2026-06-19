@@ -9,13 +9,22 @@
   };
 
   // Helper: resolve image URL correctly
-  const getImageUrl = (imgPath) => {
-    if (!imgPath) return null;
-    if (imgPath.startsWith('http')) return imgPath;
-    // Strip leading slash and prepend backend URL
-    const clean = imgPath.startsWith('/') ? imgPath : '/' + imgPath;
-    return `http://localhost:5000${clean}`;
-  };
+  // const getImageUrl = (imgPath) => {
+  //   if (!imgPath) return null;
+  //   if (imgPath.startsWith('http')) return imgPath;
+  //   // Strip leading slash and prepend backend URL
+  //   const clean = imgPath.startsWith('/') ? imgPath : '/' + imgPath;
+  //   return `http://localhost:5000${clean}`;
+  // };
+
+
+  const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const getImageUrl = (imgPath) => {
+  if (!imgPath) return null;
+  if (imgPath.startsWith('http')) return imgPath;
+  const clean = imgPath.startsWith('/') ? imgPath : '/' + imgPath;
+  return `${BASE_URL}${clean}`;
+};
 
   // Fallback image component
   const ProductImage = ({ src, alt, style }) => {
