@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { resolveImage } from '../utils/resolveImage';
 
 export default function Cart() {
   const { cartItems, cartTotal, updateQuantity, removeFromCart, loading } = useCart();
@@ -45,9 +46,7 @@ export default function Cart() {
                   width: 72, height: 72,
                   borderRadius: 8, flexShrink: 0,
                   backgroundColor: '#fff',
-                  backgroundImage: item.image
-                    ? `url(${item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image.startsWith('/') ? item.image : '/' + item.image}`})`
-                    : 'none',
+                  backgroundImage: resolveImage(item.image) ? `url(${resolveImage(item.image)})` : 'none',
                   backgroundSize: 'contain',
                   backgroundRepeat: 'no-repeat',
                   backgroundPosition: 'center',
