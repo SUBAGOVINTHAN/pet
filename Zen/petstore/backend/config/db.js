@@ -10,7 +10,8 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'pet',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  family: 4 
 });
 
 export const testConnection = async () => {
