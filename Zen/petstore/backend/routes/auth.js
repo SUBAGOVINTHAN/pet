@@ -45,31 +45,39 @@ router.post('/login', async (req, res) => {
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
     // ── Admin: send OTP to email ──
-    if (user.role === 'admin') {
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
-      await db.query('UPDATE users SET otp = ?, otp_expires = ? WHERE id = ?', [otp, expires, user.id]);
+    // if (user.role === 'admin') {
+    //   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    //   const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    //   await db.query('UPDATE users SET otp = ?, otp_expires = ? WHERE id = ?', [otp, expires, user.id]);
 
-      await transporter.sendMail({
-        from: `"PetStore Admin" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: '🔐 Admin Login OTP - PetStore',
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #eee;border-radius:12px">
-            <h2 style="color:#F97316">🐾 PetStore Admin</h2>
-            <p>Hi ${user.name},</p>
-            <p>Your admin login OTP is:</p>
-            <div style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#F97316;text-align:center;padding:16px;background:#FFF7F0;border-radius:8px;margin:16px 0">
-              ${otp}
-            </div>
-            <p style="color:#888;font-size:13px">This OTP expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
-            <p style="color:#888;font-size:12px">If you didn't try to login, please secure your account immediately.</p>
-          </div>
-        `,
-      });
+    //   await transporter.sendMail({
+    //     from: `"PetStore Admin" <${process.env.EMAIL_USER}>`,
+    //     to: email,
+    //     subject: '🔐 Admin Login OTP - PetStore',
+    //     html: `
+    //       <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #eee;border-radius:12px">
+    //         <h2 style="color:#F97316">🐾 PetStore Admin</h2>
+    //         <p>Hi ${user.name},</p>
+    //         <p>Your admin login OTP is:</p>
+    //         <div style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#F97316;text-align:center;padding:16px;background:#FFF7F0;border-radius:8px;margin:16px 0">
+    //           ${otp}
+    //         </div>
+    //         <p style="color:#888;font-size:13px">This OTP expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
+    //         <p style="color:#888;font-size:12px">If you didn't try to login, please secure your account immediately.</p>
+    //       </div>
+    //     `,
+    //   });
 
-      return res.json({ requireOtp: true, message: 'OTP sent to your email' });
-    }
+    //   return res.json({ requireOtp: true, message: 'OTP sent to your email' });
+    // }
+
+
+    // ── Admin: send OTP to email ──
+if (user.role === 'admin') {
+  // Temporarily skip OTP - direct login
+  const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  return res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+}
 
     // ── Regular user: issue token directly ──
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
