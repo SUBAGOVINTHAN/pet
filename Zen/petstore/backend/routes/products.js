@@ -2,14 +2,26 @@ import express from 'express';
 import db from '../config/db.js';
 import { authenticate, isAdmin } from '../middleware/auth.js';
 import multer from 'multer';
-import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-  destination: 'uploads/',
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+// ── Cloudinary config ──
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'petstore',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+  },
+});
+
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Get all products
@@ -77,7 +89,7 @@ router.post('/', authenticate, isAdmin, upload.single('image'), async (req, res)
   try {
     const { name, description, price, discount_price, stock, category_id, is_featured, pet_type } = req.body;
     const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now();
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    const image = req.file ? req.file.path : null;  // ✅ Cloudinary URL
     const [result] = await db.query(
       'INSERT INTO products (name, slug, description, price, discount_price, stock, category_id, image, is_featured, pet_type) VALUES (?,?,?,?,?,?,?,?,?,?)',
       [name, slug, description, price, discount_price || null, stock, category_id, image, is_featured ? 1 : 0, pet_type]
@@ -92,7 +104,7 @@ router.post('/', authenticate, isAdmin, upload.single('image'), async (req, res)
 router.put('/:id', authenticate, isAdmin, upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, discount_price, stock, category_id, is_featured, pet_type, is_active } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const image = req.file ? req.file.path : undefined;  // ✅ Cloudinary URL
     let query = 'UPDATE products SET name=?, description=?, price=?, discount_price=?, stock=?, category_id=?, is_featured=?, pet_type=?, is_active=?';
     const params = [name, description, price, discount_price || null, stock, category_id, is_featured ? 1 : 0, pet_type, is_active ? 1 : 0];
     if (image) { query += ', image=?'; params.push(image); }
