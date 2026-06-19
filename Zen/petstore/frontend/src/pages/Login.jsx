@@ -33,9 +33,20 @@ export default function Login() {
       }
 
       // Regular user — store token and redirect
-      const user = await login(form.email, form.password);
-      toast.success(`Welcome, ${user.name.split(' ')[0]}!`);
-      navigate('/', { replace: true });
+      // const user = await login(form.email, form.password);
+      // toast.success(`Welcome, ${user.name.split(' ')[0]}!`);
+      // navigate('/', { replace: true });
+
+      // Token received (admin or user)
+localStorage.setItem('token', res.data.token);
+localStorage.setItem('user', JSON.stringify(res.data.user));
+toast.success(`Welcome, ${res.data.user.name.split(' ')[0]}!`);
+
+if (res.data.user.role === 'admin') {
+  window.location.href = '/admin';
+} else {
+  window.location.href = '/';
+}
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed. Check email and password.';
       setErrorMsg(msg);
