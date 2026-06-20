@@ -55,7 +55,7 @@ export default function Navbar() {
         zIndex: 100,
         width: '100%',
         boxSizing: 'border-box',
-        overflowX: 'hidden'   /* ✅ nothing can bleed outside nav */
+       overflowX: 'clip'
       }}>
         {/* ✅ Removed "container" class — it adds its own padding/max-width
             that fights with mobile layout. We control padding ourselves. */}
