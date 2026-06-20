@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import db from '../config/db.js';
 import { authenticate } from '../middleware/auth.js';
 import nodemailer from 'nodemailer';
+import dns from 'dns';
 
 const router = express.Router();
 
@@ -15,7 +16,12 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  family: 4
+  dnsTimeout: 5000,
+  socketTimeout: 10000,
+  tls: { rejectUnauthorized: false },
+  lookup: (hostname, options, callback) => {
+    dns.lookup(hostname, { ...options, family: 4 }, callback);
+  }
 });
 
 // ── Register ──
