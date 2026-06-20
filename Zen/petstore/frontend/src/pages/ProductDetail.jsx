@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { resolveImage } from '../utils/resolveImage';
 
+const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
+
 export default function ProductDetail() {
   const { slug } = useParams();
   const { addToCart } = useCart();
@@ -18,6 +20,13 @@ export default function ProductDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [lightbox, setLightbox] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
+  const [mobile, setMobile] = useState(isMobile());
+
+  useEffect(() => {
+    const handler = () => setMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   useEffect(() => {
     api.get(`/products/${slug}`).then(r => setProduct(r.data)).finally(() => setLoading(false));
@@ -70,7 +79,13 @@ export default function ProductDetail() {
       </Link>
 
       {/* Main grid — image + info side by side */}
-      <div style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: 36, alignItems: 'start', marginBottom: 36 }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: mobile ? '1fr' : '420px 1fr',
+        gap: mobile ? 20 : 36,
+        alignItems: 'start',
+        marginBottom: 36
+      }}>
 
         {/* ── Image Gallery ── */}
         <div>
@@ -79,7 +94,7 @@ export default function ProductDetail() {
             onClick={() => currentImage && setLightbox(true)}
             style={{
               borderRadius: 14, border: '1px solid #eee',
-              background: '#fff', width: '100%', height: 380,
+              background: '#fff', width: '100%', height: mobile ? 260 : 380,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'zoom-in', position: 'relative', overflow: 'hidden',
               marginBottom: 10,
@@ -113,7 +128,7 @@ export default function ProductDetail() {
                   key={i}
                   onClick={() => setActiveImg(i)}
                   style={{
-                    width: 72, height: 72, borderRadius: 10,
+                    width: mobile ? 58 : 72, height: mobile ? 58 : 72, borderRadius: 10,
                     border: `2px solid ${activeImg === i ? '#F97316' : '#eee'}`,
                     overflow: 'hidden', cursor: 'pointer',
                     flexShrink: 0, background: '#fff',
