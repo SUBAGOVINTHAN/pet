@@ -17,6 +17,7 @@ export default function ProductDetail() {
   const [review, setReview] = useState({ rating: 5, comment: '' });
   const [submitting, setSubmitting] = useState(false);
   const [lightbox, setLightbox] = useState(false);
+  const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => {
     api.get(`/products/${slug}`).then(r => setProduct(r.data)).finally(() => setLoading(false));
@@ -50,11 +51,15 @@ export default function ProductDetail() {
     ? Math.round((1 - product.discount_price / product.price) * 100)
     : null;
 
-  // const imageUrl = product.image
-  //   ? (product.image.startsWith('http') ? product.image : `http://localhost:5000${product.image}`)
-  //   : null;
-
   const imageUrl = resolveImage(product.image);
+
+  // Build full images array: main + extras
+  const allImages = [
+    product.image,
+    ...(Array.isArray(product.images) ? product.images : [])
+  ].filter(Boolean).map(resolveImage);
+
+  const currentImage = allImages[activeImg] || imageUrl;
 
   return (
     <div className="container" style={{ paddingTop: 24, paddingBottom: 48 }}>
@@ -67,41 +72,64 @@ export default function ProductDetail() {
       {/* Main grid — image + info side by side */}
       <div style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: 36, alignItems: 'start', marginBottom: 36 }}>
 
-        {/* ── Image ── */}
-        <div
-          onClick={() => setLightbox(true)}
-          style={{
-            borderRadius: 14,
-            border: '1px solid #eee',
-            background: '#fff',
-            width: '100%',
-            height: 380,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'zoom-in',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={product.name}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 12 }}
-              onError={e => { e.target.style.display = 'none'; }}
-            />
-          ) : (
-            <div style={{ color: '#ccc', fontSize: 14 }}>No image</div>
-          )}
-          <div style={{
-            position: 'absolute', bottom: 8, right: 8,
-            background: 'rgba(0,0,0,0.4)', borderRadius: 6,
-            padding: '3px 8px', display: 'flex', alignItems: 'center',
-            gap: 4, color: '#fff', fontSize: 11
-          }}>
-            <ZoomIn size={12} /> Zoom
+        {/* ── Image Gallery ── */}
+        <div>
+          {/* Main Image */}
+          <div
+            onClick={() => currentImage && setLightbox(true)}
+            style={{
+              borderRadius: 14, border: '1px solid #eee',
+              background: '#fff', width: '100%', height: 380,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'zoom-in', position: 'relative', overflow: 'hidden',
+              marginBottom: 10,
+            }}
+          >
+            {currentImage ? (
+              <img
+                src={currentImage}
+                alt={product.name}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 12 }}
+                onError={e => { e.target.style.display = 'none'; }}
+              />
+            ) : (
+              <div style={{ color: '#ccc', fontSize: 14 }}>No image</div>
+            )}
+            <div style={{
+              position: 'absolute', bottom: 8, right: 8,
+              background: 'rgba(0,0,0,0.4)', borderRadius: 6,
+              padding: '3px 8px', display: 'flex', alignItems: 'center',
+              gap: 4, color: '#fff', fontSize: 11
+            }}>
+              <ZoomIn size={12} /> Zoom
+            </div>
           </div>
+
+          {/* Thumbnails — only show if more than 1 image */}
+          {allImages.length > 1 && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {allImages.map((img, i) => (
+                <div
+                  key={i}
+                  onClick={() => setActiveImg(i)}
+                  style={{
+                    width: 72, height: 72, borderRadius: 10,
+                    border: `2px solid ${activeImg === i ? '#F97316' : '#eee'}`,
+                    overflow: 'hidden', cursor: 'pointer',
+                    flexShrink: 0, background: '#fff',
+                    padding: 3, boxSizing: 'border-box',
+                    transition: 'border-color 0.2s',
+                  }}
+                >
+                  <img
+                    src={img}
+                    alt={`${product.name} ${i + 1}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── Info ── */}
@@ -217,7 +245,7 @@ export default function ProductDetail() {
             }}
           >
             <img
-              src={imageUrl}
+              src={currentImage}
               alt={product.name}
               style={{ maxWidth: '78vw', maxHeight: '78vh', objectFit: 'contain', borderRadius: 8, display: 'block' }}
               onError={e => e.target.src = 'https://via.placeholder.com/600x400?text=No+Image'}
