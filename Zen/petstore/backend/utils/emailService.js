@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
-  port: 587,
+  port: 465,
   secure: false,
   auth: {
     user: process.env.EMAIL_USER,
