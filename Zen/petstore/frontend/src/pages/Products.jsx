@@ -176,24 +176,22 @@ export default function Products() {
         <h4 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#888', letterSpacing: 1 }}>PRICE RANGE</h4>
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <input
-            className="input"
             placeholder="Min"
             value={minPrice}
             type="number"
             min={0}
             onChange={e => setMinPrice(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && applyPrice()}
-            style={{ padding: '6px 10px', fontSize: 13 }}
+            style={{ flex: 1, padding: '7px 10px', fontSize: 13, border: '1px solid #ddd', borderRadius: 8, outline: 'none', minWidth: 0 }}
           />
           <input
-            className="input"
             placeholder="Max"
             value={maxPrice}
             type="number"
             min={0}
             onChange={e => setMaxPrice(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && applyPrice()}
-            style={{ padding: '6px 10px', fontSize: 13 }}
+            style={{ flex: 1, padding: '7px 10px', fontSize: 13, border: '1px solid #ddd', borderRadius: 8, outline: 'none', minWidth: 0 }}
           />
         </div>
         <button
@@ -210,7 +208,13 @@ export default function Products() {
   );
 
   return (
-    <div className="container section" style={{ paddingTop: 32 }}>
+    <div style={{
+      width: '100%',
+      boxSizing: 'border-box',
+      padding: isDesktop ? '32px 24px' : '16px 16px',
+      maxWidth: 1200,
+      margin: '0 auto',
+    }}>
 
       {/* ── Mobile Filter Drawer (overlay) ── */}
       {!isDesktop && showFilter && (
@@ -252,21 +256,40 @@ export default function Products() {
           <div style={{ marginBottom: 20 }}>
             {/* Title + count */}
             <div style={{ marginBottom: 12 }}>
-              <h1 style={{ fontWeight: 700, fontSize: isDesktop ? 22 : 18, margin: 0 }}>
+              <h1 style={{
+                fontWeight: 700,
+                fontSize: isDesktop ? 22 : 18,
+                margin: 0,
+                wordBreak: 'break-word',
+                lineHeight: 1.3,
+              }}>
                 {search   ? `Results for "${search}"` :
                  featured ? 'Featured Products'        :
                  pet_type ? `${pet_type} Products`     : 'All Products'}
               </h1>
-              <p style={{ color: '#9CA3AF', fontSize: 13, margin: '4px 0 0' }}>{total} products found</p>
+              <p style={{ color: '#9CA3AF', fontSize: 13, margin: '4px 0 0', display: 'block' }}>
+                {total} products found
+              </p>
             </div>
 
             {/* Sort + Filter toggle — full width row on mobile */}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <select
-                className="input"
                 value={sort}
                 onChange={e => setParam('sort', e.target.value)}
-                style={{ flex: 1, padding: '8px 12px', fontSize: 13 }}
+                style={{
+                  flex: 1,
+                  padding: '8px 10px',
+                  fontSize: 13,
+                  border: '1px solid #ddd',
+                  borderRadius: 8,
+                  background: '#fff',
+                  color: '#333',
+                  outline: 'none',
+                  appearance: 'auto',
+                  cursor: 'pointer',
+                  minWidth: 0,
+                }}
               >
                 {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -274,7 +297,7 @@ export default function Products() {
                 onClick={() => setShowFilter(v => !v)}
                 style={{
                   flexShrink: 0,
-                  border: '1.5px solid',
+                  border: '1px solid',
                   borderColor: showFilter ? '#F97316' : '#ddd',
                   background:  showFilter ? '#FFF7F0' : '#fff',
                   color:       showFilter ? '#F97316' : '#555',
@@ -282,7 +305,7 @@ export default function Products() {
                   padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
                   fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap',
                 }}>
-                <Filter size={14} /> {isDesktop ? (showFilter ? 'Hide Filters' : 'Filters') : 'Filters'}
+                <Filter size={14} /> Filters
               </button>
             </div>
           </div>
@@ -291,10 +314,31 @@ export default function Products() {
           {loading ? (
             <div className="spinner" />
           ) : products.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-              <div style={{ fontSize: 64 }}>🐾</div>
-              <h3 style={{ marginTop: 16, color: '#555' }}>No products found</h3>
-              <button onClick={clearAll} className="btn btn-primary" style={{ marginTop: 16 }}>
+            <div style={{
+              textAlign: 'center',
+              padding: isDesktop ? '80px 20px' : '40px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 12,
+            }}>
+              <div style={{ fontSize: isDesktop ? 64 : 48 }}>🐾</div>
+              <h3 style={{ margin: 0, color: '#555', fontSize: isDesktop ? 18 : 16 }}>No products found</h3>
+              <p style={{ margin: 0, color: '#9CA3AF', fontSize: 13 }}>Try adjusting your filters</p>
+              <button
+                onClick={clearAll}
+                style={{
+                  marginTop: 4,
+                  padding: '10px 28px',
+                  background: '#F97316',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                }}
+              >
                 Clear Filters
               </button>
             </div>
