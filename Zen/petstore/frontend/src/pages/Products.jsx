@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Filter, X } from 'lucide-react';
 import api from '../utils/api';
@@ -22,7 +22,6 @@ export default function Products() {
   const [isDesktop,  setIsDesktop]  = useState(window.innerWidth > 768);
   const [showFilter, setShowFilter] = useState(window.innerWidth > 768);
 
-  // ── Price range kept in local state; applied via "Apply" or Enter ──────────
   const [minPrice, setMinPrice] = useState(searchParams.get('min_price') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('max_price') || '');
 
@@ -33,33 +32,28 @@ export default function Products() {
   const sort     = searchParams.get('sort')     || 'newest';
   const featured = searchParams.get('featured') || '';
 
-  // ── Load categories once ──────────────────────────────────────────────────
   useEffect(() => {
     api.get('/categories').then(r => setCategories(r.data));
   }, []);
 
-  // ── Track desktop vs mobile reactively ─────────────────────────────────
   useEffect(() => {
     const onResize = () => {
       const desktop = window.innerWidth > 768;
       setIsDesktop(desktop);
-      // When resizing to desktop, always show sidebar
       if (desktop) setShowFilter(true);
+      else setShowFilter(false);
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // ── Fetch products whenever searchParams change ───────────────────────────
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams({ page, limit: 12, sort });
-    if (search)   params.set('search',    search);
-    if (category) params.set('category',  category);
-    if (pet_type) params.set('pet_type',  pet_type);
-    if (featured) params.set('featured',  featured);
-
-    // Read price directly from searchParams so API call is always in sync
+    if (search)   params.set('search',   search);
+    if (category) params.set('category', category);
+    if (pet_type) params.set('pet_type', pet_type);
+    if (featured) params.set('featured', featured);
     const spMin = searchParams.get('min_price');
     const spMax = searchParams.get('max_price');
     if (spMin) params.set('min_price', spMin);
@@ -72,9 +66,8 @@ export default function Products() {
         setTotalPages(r.data.totalPages);
       })
       .finally(() => setLoading(false));
-  }, [searchParams]); // single dependency — searchParams covers everything
+  }, [searchParams]);
 
-  // ── Helper: update a single param, reset to page 1 ───────────────────────
   const setParam = useCallback((key, val) => {
     setSearchParams(prev => {
       const p = new URLSearchParams(prev);
@@ -84,7 +77,6 @@ export default function Products() {
     });
   }, [setSearchParams]);
 
-  // ── Toggle: clicking the active value deselects it ────────────────────────
   const toggleParam = useCallback((key, val) => {
     setSearchParams(prev => {
       const p   = new URLSearchParams(prev);
@@ -95,7 +87,6 @@ export default function Products() {
     });
   }, [setSearchParams]);
 
-  // ── Apply price range to searchParams (triggers fetch) ───────────────────
   const applyPrice = useCallback(() => {
     setSearchParams(prev => {
       const p = new URLSearchParams(prev);
@@ -106,160 +97,197 @@ export default function Products() {
     });
   }, [minPrice, maxPrice, setSearchParams]);
 
-  // ── Clear all filters (keep featured if present) ──────────────────────────
   const clearAll = useCallback(() => {
     setMinPrice('');
     setMaxPrice('');
     setSearchParams(prev => {
       const p = new URLSearchParams();
-      // preserve featured so the page context isn't lost
       if (prev.get('featured')) p.set('featured', prev.get('featured'));
       return p;
     });
   }, [setSearchParams]);
 
-  // ── Sync local price inputs when searchParams change externally ───────────
   useEffect(() => {
     setMinPrice(searchParams.get('min_price') || '');
     setMaxPrice(searchParams.get('max_price') || '');
   }, [searchParams]);
 
+  // Filter panel content — shared between sidebar and drawer
+  const FilterPanel = () => (
+    <div style={{
+      background: '#fff', borderRadius: isDesktop ? 12 : 0,
+      padding: 20, border: isDesktop ? '1px solid #eee' : 'none',
+      position: isDesktop ? 'sticky' : 'static', top: 90,
+      height: isDesktop ? 'auto' : '100%',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h3 style={{ fontWeight: 700, fontSize: 16 }}>Filters</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={clearAll} style={{ fontSize: 12, color: '#F97316', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+            Clear All
+          </button>
+          {!isDesktop && (
+            <button onClick={() => setShowFilter(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#6b7280' }}>
+              <X size={18} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Categories */}
+      <div style={{ marginBottom: 20 }}>
+        <h4 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#888', letterSpacing: 1 }}>CATEGORIES</h4>
+        {categories.map(c => (
+          <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, cursor: 'pointer', fontSize: 14 }}>
+            <input
+              type="radio"
+              name="cat"
+              checked={category === c.slug}
+              onChange={() => toggleParam('category', c.slug)}
+            />
+            {c.name}
+          </label>
+        ))}
+      </div>
+
+      {/* Pet Type */}
+      <div style={{ marginBottom: 20 }}>
+        <h4 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#888', letterSpacing: 1 }}>PET TYPE</h4>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {PET_TYPES.map(t => (
+            <button key={t}
+              onClick={() => toggleParam('pet_type', t)}
+              style={{
+                padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                border: '1.5px solid',
+                borderColor: pet_type === t ? '#F97316' : '#ddd',
+                background:  pet_type === t ? '#FFF7F0' : '#fff',
+                color:       pet_type === t ? '#F97316' : '#555',
+                cursor: 'pointer', textTransform: 'capitalize',
+              }}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Price Range */}
+      <div>
+        <h4 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#888', letterSpacing: 1 }}>PRICE RANGE</h4>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <input
+            className="input"
+            placeholder="Min"
+            value={minPrice}
+            type="number"
+            min={0}
+            onChange={e => setMinPrice(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && applyPrice()}
+            style={{ padding: '6px 10px', fontSize: 13 }}
+          />
+          <input
+            className="input"
+            placeholder="Max"
+            value={maxPrice}
+            type="number"
+            min={0}
+            onChange={e => setMaxPrice(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && applyPrice()}
+            style={{ padding: '6px 10px', fontSize: 13 }}
+          />
+        </div>
+        <button
+          onClick={applyPrice}
+          style={{
+            width: '100%', padding: '8px 0', borderRadius: 8, fontSize: 13,
+            fontWeight: 600, background: '#F97316', color: '#fff',
+            border: 'none', cursor: 'pointer',
+          }}>
+          Apply Price
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="container section" style={{ paddingTop: 32 }}>
-      <div style={{ display: 'flex', gap: 32 }}>
 
-        {/* ── Sidebar Filters ── */}
-        <aside style={{
-          width: 240, flexShrink: 0,
-          display: showFilter ? 'block' : 'none',
-        }}>
+      {/* ── Mobile Filter Drawer (overlay) ── */}
+      {!isDesktop && showFilter && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setShowFilter(false)}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+              zIndex: 400,
+            }}
+          />
+          {/* Drawer */}
           <div style={{
-            background: '#fff', borderRadius: 12, padding: 20,
-            border: '1px solid #eee', position: 'sticky', top: 90,
+            position: 'fixed', top: 0, left: 0, bottom: 0,
+            width: 280, background: '#fff',
+            zIndex: 500, overflowY: 'auto',
+            boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+            padding: 0,
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontWeight: 700 }}>Filters</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <button onClick={clearAll} style={{ fontSize: 12, color: '#F97316', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
-                  Clear All
-                </button>
-                {!isDesktop && (
-                  <button onClick={() => setShowFilter(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#6b7280' }}>
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Categories */}
-            <div style={{ marginBottom: 20 }}>
-              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: '#555' }}>CATEGORIES</h4>
-              {categories.map(c => (
-                <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer', fontSize: 14 }}>
-                  <input
-                    type="radio"
-                    name="cat"
-                    checked={category === c.slug}
-                    onChange={() => toggleParam('category', c.slug)}  // ✅ toggle on/off
-                  />
-                  {c.name}
-                </label>
-              ))}
-            </div>
-
-            {/* Pet Type */}
-            <div style={{ marginBottom: 20 }}>
-              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: '#555' }}>PET TYPE</h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {PET_TYPES.map(t => (
-                  <button key={t}
-                    onClick={() => toggleParam('pet_type', t)}       // ✅ toggle on/off
-                    style={{
-                      padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                      border: '1.5px solid',
-                      borderColor:  pet_type === t ? '#F97316' : '#ddd',
-                      background:   pet_type === t ? '#FFF7F0' : '#fff',
-                      color:        pet_type === t ? '#F97316' : '#555',
-                      cursor: 'pointer', textTransform: 'capitalize',
-                    }}>
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Price Range */}
-            <div>
-              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: '#555' }}>PRICE RANGE</h4>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <input
-                  className="input"
-                  placeholder="Min"
-                  value={minPrice}
-                  type="number"
-                  min={0}
-                  onChange={e => setMinPrice(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && applyPrice()} // ✅ Enter to apply
-                  style={{ padding: '6px 10px', fontSize: 13 }}
-                />
-                <input
-                  className="input"
-                  placeholder="Max"
-                  value={maxPrice}
-                  type="number"
-                  min={0}
-                  onChange={e => setMaxPrice(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && applyPrice()} // ✅ Enter to apply
-                  style={{ padding: '6px 10px', fontSize: 13 }}
-                />
-              </div>
-              {/* ✅ Explicit Apply button — price now actually triggers a fetch */}
-              <button
-                onClick={applyPrice}
-                style={{
-                  width: '100%', padding: '7px 0', borderRadius: 8, fontSize: 13,
-                  fontWeight: 600, background: '#F97316', color: '#fff',
-                  border: 'none', cursor: 'pointer',
-                }}>
-                Apply Price
-              </button>
-            </div>
+            <FilterPanel />
           </div>
-        </aside>
+        </>
+      )}
+
+      <div style={{ display: 'flex', gap: 28 }}>
+
+        {/* ── Desktop Sidebar ── */}
+        {isDesktop && showFilter && (
+          <aside style={{ width: 240, flexShrink: 0 }}>
+            <FilterPanel />
+          </aside>
+        )}
 
         {/* ── Main Content ── */}
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <h1 style={{ fontWeight: 700, fontSize: 22 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+
+          {/* Header row */}
+          <div style={{ marginBottom: 20 }}>
+            {/* Title + count */}
+            <div style={{ marginBottom: 12 }}>
+              <h1 style={{ fontWeight: 700, fontSize: isDesktop ? 22 : 18, margin: 0 }}>
                 {search   ? `Results for "${search}"` :
                  featured ? 'Featured Products'        :
                  pet_type ? `${pet_type} Products`     : 'All Products'}
               </h1>
-              <p style={{ color: '#9CA3AF', fontSize: 13 }}>{total} products found</p>
+              <p style={{ color: '#9CA3AF', fontSize: 13, margin: '4px 0 0' }}>{total} products found</p>
             </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <select className="input" value={sort} onChange={e => setParam('sort', e.target.value)}
-                style={{ width: 'auto', padding: '8px 12px', fontSize: 13 }}>
+
+            {/* Sort + Filter toggle — full width row on mobile */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <select
+                className="input"
+                value={sort}
+                onChange={e => setParam('sort', e.target.value)}
+                style={{ flex: 1, padding: '8px 12px', fontSize: 13 }}
+              >
                 {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
               <button
-                className="btn btn-sm"
                 onClick={() => setShowFilter(v => !v)}
                 style={{
+                  flexShrink: 0,
                   border: '1.5px solid',
                   borderColor: showFilter ? '#F97316' : '#ddd',
                   background:  showFilter ? '#FFF7F0' : '#fff',
                   color:       showFilter ? '#F97316' : '#555',
                   display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
-                  fontWeight: 600, fontSize: 13,
+                  padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
+                  fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap',
                 }}>
-                <Filter size={14} /> {showFilter ? 'Hide Filters' : 'Filters'}
+                <Filter size={14} /> {isDesktop ? (showFilter ? 'Hide Filters' : 'Filters') : 'Filters'}
               </button>
             </div>
           </div>
 
+          {/* Products */}
           {loading ? (
             <div className="spinner" />
           ) : products.length === 0 ? (
@@ -276,7 +304,7 @@ export default function Products() {
                 {products.map(p => <ProductCard key={p.id} product={p} />)}
               </div>
               {totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 40 }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 40, flexWrap: 'wrap' }}>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                     <button key={p} onClick={() => setParam('page', p)}
                       style={{
