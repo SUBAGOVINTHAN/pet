@@ -7,7 +7,6 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 const router = express.Router();
 
-// ── Cloudinary config ──
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key:    process.env.CLOUDINARY_API_KEY,
@@ -16,12 +15,10 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder: 'petstore',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-  },
+  params: { folder: 'petstore', allowed_formats: ['jpg', 'jpeg', 'png', 'webp'] },
 });
 
+// ✅ Allow multiple images (up to 5)
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Get all products
@@ -66,7 +63,12 @@ router.get('/:slug', async (req, res) => {
       'SELECT r.*, u.name as user_name FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id = ? ORDER BY r.created_at DESC',
       [rows[0].id]
     );
-    res.json({ ...rows[0], reviews });
+    // ✅ Parse images JSON
+    const product = rows[0];
+    if (product.images && typeof product.images === 'string') {
+      try { product.images = JSON.parse(product.images); } catch { product.images = []; }
+    }
+    res.json({ ...product, reviews });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -76,8 +78,10 @@ router.get('/:slug', async (req, res) => {
 router.post('/:id/review', authenticate, async (req, res) => {
   try {
     const { rating, comment } = req.body;
-    await db.query('INSERT INTO reviews (user_id, product_id, rating, comment) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating=?, comment=?',
-      [req.user.id, req.params.id, rating, comment, rating, comment]);
+    await db.query(
+      'INSERT INTO reviews (user_id, product_id, rating, comment) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating=?, comment=?',
+      [req.user.id, req.params.id, rating, comment, rating, comment]
+    );
     res.json({ message: 'Review submitted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -85,14 +89,18 @@ router.post('/:id/review', authenticate, async (req, res) => {
 });
 
 // Admin: Create product
-router.post('/', authenticate, isAdmin, upload.single('image'), async (req, res) => {
+router.post('/', authenticate, isAdmin, upload.array('images', 5), async (req, res) => {
   try {
     const { name, description, price, discount_price, stock, category_id, is_featured, pet_type } = req.body;
     const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now();
-    const image = req.file ? req.file.path : null;  // ✅ Cloudinary URL
+
+    const urls = (req.files || []).map(f => f.path);
+    const image  = urls[0] || null;           // ✅ First image = main image
+    const images = urls.length > 1 ? JSON.stringify(urls.slice(1)) : null; // ✅ Rest = extra images
+
     const [result] = await db.query(
-      'INSERT INTO products (name, slug, description, price, discount_price, stock, category_id, image, is_featured, pet_type) VALUES (?,?,?,?,?,?,?,?,?,?)',
-      [name, slug, description, price, discount_price || null, stock, category_id, image, is_featured ? 1 : 0, pet_type]
+      'INSERT INTO products (name, slug, description, price, discount_price, stock, category_id, image, images, is_featured, pet_type) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [name, slug, description, price, discount_price || null, stock, category_id, image, images, is_featured ? 1 : 0, pet_type]
     );
     res.status(201).json({ message: 'Product created', id: result.insertId });
   } catch (err) {
@@ -101,14 +109,22 @@ router.post('/', authenticate, isAdmin, upload.single('image'), async (req, res)
 });
 
 // Admin: Update product
-router.put('/:id', authenticate, isAdmin, upload.single('image'), async (req, res) => {
+router.put('/:id', authenticate, isAdmin, upload.array('images', 5), async (req, res) => {
   try {
     const { name, description, price, discount_price, stock, category_id, is_featured, pet_type, is_active } = req.body;
-    const image = req.file ? req.file.path : undefined;  // ✅ Cloudinary URL
+
+    const urls = (req.files || []).map(f => f.path);
+    const newImage  = urls[0] || undefined;
+    const newImages = urls.length > 1 ? JSON.stringify(urls.slice(1)) : undefined;
+
     let query = 'UPDATE products SET name=?, description=?, price=?, discount_price=?, stock=?, category_id=?, is_featured=?, pet_type=?, is_active=?';
     const params = [name, description, price, discount_price || null, stock, category_id, is_featured ? 1 : 0, pet_type, is_active ? 1 : 0];
-    if (image) { query += ', image=?'; params.push(image); }
-    query += ' WHERE id=?'; params.push(req.params.id);
+
+    if (newImage)  { query += ', image=?';  params.push(newImage); }
+    if (newImages) { query += ', images=?'; params.push(newImages); }
+
+    query += ' WHERE id=?';
+    params.push(req.params.id);
     await db.query(query, params);
     res.json({ message: 'Product updated' });
   } catch (err) {
