@@ -164,13 +164,13 @@ if (res.data.user.role === 'admin') {
               <Link to="/register" style={{ color: '#F97316', fontWeight: 600 }}>Register</Link>
             </p>
 
-            <div style={{
+            {/* <div style={{
               marginTop: 20, padding: 12, background: '#FFF7F0',
               borderRadius: 8, fontSize: 12, color: '#555', textAlign: 'center', lineHeight: 1.8
             }}>
               <strong>Admin Demo:</strong><br />
               admin@petstore.com / Admin@123
-            </div>
+            </div> */}
           </>
         )}
 
