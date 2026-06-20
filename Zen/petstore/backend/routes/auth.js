@@ -3,22 +3,29 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../config/db.js';
 import { authenticate } from '../middleware/auth.js';
-import nodemailer from 'nodemailer';
-import dns from 'dns';
 
 const router = express.Router();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+const sendBrevoEmail = async ({ to, subject, htmlContent }) => {
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': process.env.BREVO_API_KEY,
+    },
+    body: JSON.stringify({
+      sender: { name: 'PetStore', email: process.env.EMAIL_USER },
+      to: [{ email: to }],
+      subject,
+      htmlContent,
+    }),
+  });
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Brevo error: ${err}`);
   }
-});
+};
 
-// ── Register ──
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
@@ -37,7 +44,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// ── Login ── (admin gets OTP, user gets token directly)
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -46,16 +52,10 @@ router.post('/login', async (req, res) => {
     const user = rows[0];
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
-
-    
-    // ── Admin: send OTP to email ──
-if (user.role === 'admin') {
-  // Temporarily skip OTP - direct login
-  const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-  return res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
-}
-
-    // ── Regular user: issue token directly ──
+    if (user.role === 'admin') {
+      const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      return res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    }
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone } });
   } catch (err) {
@@ -63,24 +63,17 @@ if (user.role === 'admin') {
   }
 });
 
-// ── Admin OTP Verify ──
 router.post('/admin-verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ message: 'Email and OTP required' });
-
     const [rows] = await db.query(
       'SELECT * FROM users WHERE email = ? AND otp = ? AND otp_expires > NOW() AND role = ?',
       [email, otp, 'admin']
     );
-
     if (!rows.length) return res.status(400).json({ message: 'Invalid or expired OTP' });
-
     const user = rows[0];
-
-    // Clear OTP after successful verify
     await db.query('UPDATE users SET otp = NULL, otp_expires = NULL WHERE id = ?', [user.id]);
-
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
   } catch (err) {
@@ -88,7 +81,6 @@ router.post('/admin-verify-otp', async (req, res) => {
   }
 });
 
-// ── Get profile ──
 router.get('/profile', authenticate, async (req, res) => {
   try {
     const [rows] = await db.query('SELECT id, name, email, phone, address, city, state, pincode, role, created_at FROM users WHERE id = ?', [req.user.id]);
@@ -98,7 +90,6 @@ router.get('/profile', authenticate, async (req, res) => {
   }
 });
 
-// ── Update profile ──
 router.put('/profile', authenticate, async (req, res) => {
   try {
     const { name, phone, address, city, state, pincode } = req.body;
@@ -110,7 +101,6 @@ router.put('/profile', authenticate, async (req, res) => {
   }
 });
 
-// ── Change password ──
 router.put('/change-password', authenticate, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -125,7 +115,6 @@ router.put('/change-password', authenticate, async (req, res) => {
   }
 });
 
-// ── Forgot password ──
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -137,11 +126,10 @@ router.post('/forgot-password', async (req, res) => {
     const expires = new Date(Date.now() + 10 * 60 * 1000);
     await db.query('UPDATE users SET otp = ?, otp_expires = ? WHERE email = ?', [otp, expires, email]);
 
-    await transporter.sendMail({
-      from: `"PetStore" <${process.env.EMAIL_USER}>`,
+    await sendBrevoEmail({
       to: email,
       subject: 'Your OTP - PetStore Password Reset',
-      html: `
+      htmlContent: `
         <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #eee;border-radius:12px">
           <h2 style="color:#F97316">🐾 PetStore</h2>
           <p>Hi ${rows[0].name},</p>
@@ -149,17 +137,18 @@ router.post('/forgot-password', async (req, res) => {
           <div style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#F97316;text-align:center;padding:16px;background:#FFF7F0;border-radius:8px;margin:16px 0">
             ${otp}
           </div>
-          <p style="color:#888;font-size:13px">This OTP expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
+          <p style="color:#888;font-size:13px">Expires in <strong>10 minutes</strong>. Do not share it.</p>
         </div>
       `,
     });
+
     res.json({ message: 'OTP sent to your email' });
   } catch (err) {
+    console.error('Forgot password error:', err.message);
     res.status(500).json({ message: err.message });
   }
 });
 
-// ── Verify OTP (forgot password) ──
 router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -175,7 +164,6 @@ router.post('/verify-otp', async (req, res) => {
   }
 });
 
-// ── Reset password ──
 router.post('/reset-password', async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
