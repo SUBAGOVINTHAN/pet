@@ -7,22 +7,22 @@ import { authenticate } from '../middleware/auth.js';
 const router = express.Router();
 
 const sendBrevoEmail = async ({ to, subject, htmlContent }) => {
-  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+  const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'api-key': process.env.BREVO_API_KEY,
+      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      sender: { name: 'PetStore', email: process.env.EMAIL_USER },
-      to: [{ email: to }],
+      from: 'PetStore <onboarding@resend.dev>',
+      to: [to],
       subject,
-      htmlContent,
+      html: htmlContent,
     }),
   });
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`Brevo error: ${err}`);
+    throw new Error(`Resend error: ${err}`);
   }
 };
 
