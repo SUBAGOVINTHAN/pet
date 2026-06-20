@@ -22,9 +22,15 @@ export default function Cart() {
   const grand = cartTotal + shipping + tax;
 
   return (
-    <div className="container section" style={{ paddingTop: 32 }}>
-      <h1 style={{ fontWeight: 700, fontSize: 24, marginBottom: 24 }}>
-        My Cart <span style={{ color: '#9CA3AF', fontSize: 16 }}>({cartItems.length} items)</span>
+    <div style={{
+      width: '100%',
+      boxSizing: 'border-box',
+      padding: '24px 16px',
+      maxWidth: 1200,
+      margin: '0 auto',
+    }}>
+      <h1 style={{ fontWeight: 700, fontSize: 22, marginBottom: 20 }}>
+        My Cart <span style={{ color: '#9CA3AF', fontSize: 15 }}>({cartItems.length} items)</span>
       </h1>
 
       <div className="cart-layout">
@@ -32,10 +38,14 @@ export default function Cart() {
         {/* ── Items List ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {cartItems.map(item => (
-            <div key={item.id} className="card" style={{
+            <div key={item.id} style={{
+              background: '#fff',
+              borderRadius: 12,
+              border: '1px solid #f3f4f6',
               padding: 14,
               boxSizing: 'border-box',
-              width: '100%'
+              width: '100%',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
             }}>
 
               {/* Row 1: Image + Name/Price + Delete */}
@@ -43,9 +53,9 @@ export default function Cart() {
 
                 {/* Image */}
                 <div style={{
-                  width: 72, height: 72,
+                  width: 68, height: 68,
                   borderRadius: 8, flexShrink: 0,
-                  backgroundColor: '#fff',
+                  backgroundColor: '#fafafa',
                   backgroundImage: resolveImage(item.image) ? `url(${resolveImage(item.image)})` : 'none',
                   backgroundSize: 'contain',
                   backgroundRepeat: 'no-repeat',
@@ -62,13 +72,14 @@ export default function Cart() {
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
+                    wordBreak: 'break-word',
                   }}>
                     {item.name}
                   </h3>
-                  <p style={{ color: '#F97316', fontWeight: 700, fontSize: 14 }}>
+                  <p style={{ color: '#F97316', fontWeight: 700, fontSize: 14, margin: 0 }}>
                     ₹{(item.discount_price || item.price).toLocaleString()}
                   </p>
-                  <p style={{ color: '#9CA3AF', fontSize: 11, marginTop: 2 }}>per unit</p>
+                  <p style={{ color: '#9CA3AF', fontSize: 11, marginTop: 2, marginBottom: 0 }}>per unit</p>
                 </div>
 
                 {/* Delete */}
@@ -84,7 +95,7 @@ export default function Cart() {
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
                   }}
                 >
                   <Trash2 size={15} />
@@ -96,7 +107,7 @@ export default function Cart() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginTop: 12
+                marginTop: 12,
               }}>
                 {/* Qty stepper */}
                 <div style={{
@@ -104,16 +115,16 @@ export default function Cart() {
                   alignItems: 'center',
                   border: '1.5px solid #e5e7eb',
                   borderRadius: 8,
-                  overflow: 'hidden'
+                  overflow: 'hidden',
                 }}>
                   <button
                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
                     style={{
                       width: 34, height: 34,
                       background: 'none', border: 'none',
-                      cursor: 'pointer', fontSize: 18,
+                      cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#555'
+                      color: '#555',
                     }}
                   >
                     <Minus size={13} />
@@ -123,7 +134,7 @@ export default function Cart() {
                     fontWeight: 700, fontSize: 14,
                     borderLeft: '1px solid #e5e7eb',
                     borderRight: '1px solid #e5e7eb',
-                    padding: '0 4px', lineHeight: '34px'
+                    padding: '0 4px', lineHeight: '34px',
                   }}>
                     {item.quantity}
                   </span>
@@ -136,7 +147,7 @@ export default function Cart() {
                       cursor: item.quantity >= item.stock ? 'not-allowed' : 'pointer',
                       opacity: item.quantity >= item.stock ? 0.4 : 1,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#555'
+                      color: '#555',
                     }}
                   >
                     <Plus size={13} />
@@ -144,10 +155,7 @@ export default function Cart() {
                 </div>
 
                 {/* Line total */}
-                <span style={{
-                  fontWeight: 700, fontSize: 15,
-                  color: '#111', flexShrink: 0
-                }}>
+                <span style={{ fontWeight: 700, fontSize: 15, color: '#111', flexShrink: 0 }}>
                   ₹{((item.discount_price || item.price) * item.quantity).toLocaleString()}
                 </span>
               </div>
@@ -158,7 +166,13 @@ export default function Cart() {
 
         {/* ── Order Summary ── */}
         <div className="cart-summary-wrapper">
-          <div className="card" style={{ padding: 20 }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            border: '1px solid #f3f4f6',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+            padding: 20,
+          }}>
             <h3 style={{ fontWeight: 700, fontSize: 17, marginBottom: 18 }}>Order Summary</h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 16 }}>
@@ -185,7 +199,7 @@ export default function Cart() {
                 paddingTop: 12,
                 display: 'flex',
                 justifyContent: 'space-between',
-                fontWeight: 700, fontSize: 17
+                fontWeight: 700, fontSize: 17,
               }}>
                 <span>Total</span>
                 <span style={{ color: '#F97316' }}>₹{grand.toFixed(2)}</span>
@@ -200,7 +214,7 @@ export default function Cart() {
               borderRadius: 8,
               padding: '8px 12px',
               marginBottom: 16,
-              lineHeight: 1.7
+              lineHeight: 1.7,
             }}>
               🐾 <strong>Tamil Nadu</strong> deliveries:{' '}
               <span style={{ color: '#10B981', fontWeight: 700 }}>FREE shipping!</span><br />
@@ -218,7 +232,7 @@ export default function Cart() {
                 alignItems: 'center',
                 gap: 8,
                 padding: '13px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
               }}
             >
               Proceed to Checkout <ArrowRight size={16} />
@@ -232,7 +246,7 @@ export default function Cart() {
                 marginTop: 12,
                 color: '#F97316',
                 fontSize: 13,
-                fontWeight: 600
+                fontWeight: 600,
               }}
             >
               Continue Shopping
@@ -245,21 +259,20 @@ export default function Cart() {
       <style>{`
         .cart-layout {
           display: grid;
-          grid-template-columns: 1fr 320px;
-          gap: 28px;
+          grid-template-columns: 1fr 300px;
+          gap: 24px;
           align-items: start;
         }
-        .cart-summary-wrapper .card {
+        .cart-summary-wrapper > div {
           position: sticky;
           top: 90px;
         }
-
         @media (max-width: 768px) {
           .cart-layout {
             grid-template-columns: 1fr;
             gap: 16px;
           }
-          .cart-summary-wrapper .card {
+          .cart-summary-wrapper > div {
             position: static;
           }
         }
