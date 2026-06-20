@@ -28,7 +28,8 @@ app.use(cors({
     'https://pet.vasudevantechnologies.com',
     'https://www.dotpetfoods.com',
     'https://dotpetfoods.com',
-    'https://pet-zen24.vercel.app'
+    'https://pet-zen24.vercel.app',
+    'https://pet-diuj.onrender.com'
   ],
   credentials: true,
 }));
