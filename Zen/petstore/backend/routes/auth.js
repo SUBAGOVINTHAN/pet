@@ -9,18 +9,12 @@ import dns from 'dns';
 const router = express.Router();
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
+  host: process.env.EMAIL_HOST,
   port: 587,
   secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
-  },
-  dnsTimeout: 5000,
-  socketTimeout: 10000,
-  tls: { rejectUnauthorized: false },
-  lookup: (hostname, options, callback) => {
-    dns.lookup(hostname, { ...options, family: 4 }, callback);
   }
 });
 
