@@ -5,6 +5,7 @@ import api from '../utils/api';
 import ProductCard from '../components/ProductCard';
 import banner from '../assets/banner.jpg';
 import promoBanner from '../assets/section2.jpg';
+import bannerMobile from '../assets/banner_mobile.png';
 
 const FEATURES = [
   { icon: <Truck size={24} />, title: 'Free Shipping', desc: 'On orders above ₹999' },
@@ -46,45 +47,36 @@ export default function Home() {
 
       {/* ── Hero Banner ── */}
       <section style={{ position: 'relative', background: '#FFF7F0' }}>
-        {isMobile ? (
-          <>
-            <div style={{ position: 'relative', height: '220px', overflow: 'hidden' }}>
-              <img
-                src={banner}
-                alt="Pet Store Banner"
-                style={{
-                  width: '100%', height: '220px',
-                  objectFit: 'cover',
-                  objectPosition: '85% center',
-                  display: 'block'
-                }}
-              />
-              <div style={{
-                position: 'absolute', top: 0, left: 0,
-                width: '50%', height: '100%',
-                background: 'linear-gradient(to right, #FFF7F0 70%, transparent)',
-                pointerEvents: 'none'
-              }} />
-            </div>
-
-            {/* ✅ 16px padding both sides — safe on 320px screens */}
-            <div style={{
-              background: '#FFF7F0',
-              padding: '20px 16px 24px',
-              textAlign: 'center'
-            }}>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1C1C1C', marginBottom: 8, lineHeight: 1.3 }}>
-                Everything Your Pet <span style={{ color: '#F97316' }}>Needs</span>
-              </h1>
-              <p style={{ fontSize: 13, color: '#666', marginBottom: 16, lineHeight: 1.6 }}>
-                From daily nutrition to playful essentials, we've got it all.
-                Caring for your pet's comfort and well-being.
-              </p>
-              <Link to="/products" className="btn btn-primary" style={{ fontSize: 14, padding: '10px 24px' }}>
-                Shop Now <ArrowRight size={14} style={{ display: 'inline', marginLeft: 4 }} />
-              </Link>
-            </div>
-          </>
+  {isMobile ? (
+  <>
+    {/* ✅ New full mobile banner image */}
+    <div style={{ position: 'relative' }}>
+      <img
+        src={bannerMobile}
+        alt="Pet Store Banner"
+        style={{
+          width: '100%',
+          height: 'auto',
+          display: 'block',
+        }}
+      />
+      {/* Shop Now button overlay */}
+      <div style={{
+        position: 'absolute',
+        bottom: 20,
+        left: '50%',
+        transform: 'translateX(-50%)',
+      }}>
+        <Link
+          to="/products"
+          className="btn btn-primary"
+          style={{ fontSize: 14, padding: '10px 28px', whiteSpace: 'nowrap' }}
+        >
+          Shop Now <ArrowRight size={14} style={{ display: 'inline', marginLeft: 4 }} />
+        </Link>
+      </div>
+    </div>
+  </>
         ) : (
           <>
             <img
