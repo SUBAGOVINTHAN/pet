@@ -55,7 +55,7 @@ export default function Cart() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {cartItems.map((item) => {
             // ── Deleted product ──
-            if (!item.name) {
+           if (!item.name || item.is_deleted) {
               return (
                 <div
                   key={item.id}
