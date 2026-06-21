@@ -173,13 +173,13 @@ export default function ProductDetail() {
           {/* Price */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 28, fontWeight: 800, color: '#1C1C1C' }}>
-              ₹{parseFloat(price).toLocaleString()}
-            </span>
+            <span style={{ fontFamily: 'Arial, sans-serif' }}>₹</span>{parseFloat(price).toLocaleString()}
+          </span>
             {product.discount_price && (
               <>
                 <span style={{ fontSize: 16, color: '#9CA3AF', textDecoration: 'line-through' }}>
-                  ₹{parseFloat(product.price).toLocaleString()}
-                </span>
+                <span style={{ fontFamily: 'Arial, sans-serif' }}>₹</span>{parseFloat(product.price).toLocaleString()}
+              </span>
                 <span style={{ background: '#F97316', color: '#fff', padding: '2px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700 }}>
                   {discount}% OFF
                 </span>
