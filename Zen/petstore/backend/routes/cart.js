@@ -10,7 +10,7 @@ router.get('/', authenticate, async (req, res) => {
     const [items] = await db.query(
       `SELECT c.id, c.quantity, p.id as product_id, p.name, p.price, 
        p.discount_price, p.image, p.stock,
-       CASE WHEN p.id IS NULL THEN 1 ELSE 0 END as is_deleted
+       CASE WHEN p.id IS NULL OR p.is_active = 0 THEN 1 ELSE 0 END as is_deleted
        FROM cart c 
        LEFT JOIN products p ON c.product_id = p.id  
        WHERE c.user_id = ?`,
