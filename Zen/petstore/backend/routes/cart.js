@@ -8,11 +8,17 @@ const router = express.Router();
 router.get('/', authenticate, async (req, res) => {
   try {
     const [items] = await db.query(
-      `SELECT c.id, c.quantity, p.id as product_id, p.name, p.price, p.discount_price, p.image, p.stock
-       FROM cart c JOIN products p ON c.product_id = p.id WHERE c.user_id = ?`,
+      `SELECT c.id, c.quantity, p.id as product_id, p.name, p.price, 
+       p.discount_price, p.image, p.stock,
+       CASE WHEN p.id IS NULL THEN 1 ELSE 0 END as is_deleted
+       FROM cart c 
+       LEFT JOIN products p ON c.product_id = p.id  
+       WHERE c.user_id = ?`,
       [req.user.id]
     );
-    const total = items.reduce((sum, i) => sum + (i.discount_price || i.price) * i.quantity, 0);
+    const total = items
+      .filter(i => !i.is_deleted)
+      .reduce((sum, i) => sum + (i.discount_price || i.price) * i.quantity, 0);
     res.json({ items, total });
   } catch (err) {
     res.status(500).json({ message: err.message });
