@@ -132,13 +132,15 @@ export default function ProductCard({ product }) {
         {/* ── Price + Add button ── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <span style={{ fontWeight: 700, fontSize: 18, color: '#1C1C1C' }}>
-              ₹{(product.discount_price || product.price).toLocaleString()}
-            </span>
+           <span style={{ fontWeight: 700, fontSize: 18, color: '#1C1C1C' }}>
+            <span style={{ fontFamily: 'Arial, sans-serif' }}>₹</span>
+            {(product.discount_price || product.price).toLocaleString()}
+          </span>
             {product.discount_price && (
               <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', marginLeft: 6 }}>
-                ₹{product.price.toLocaleString()}
-              </span>
+              <span style={{ fontFamily: 'Arial, sans-serif' }}>₹</span>
+              {product.price.toLocaleString()}
+            </span>
             )}
           </div>
           <button
