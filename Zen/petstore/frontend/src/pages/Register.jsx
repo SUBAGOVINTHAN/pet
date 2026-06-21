@@ -34,7 +34,7 @@ export default function Register() {
         {[['Full Name', 'name', 'text'], ['Email', 'email', 'email'], ['Phone', 'phone', 'tel'], ['Password', 'password', 'password']].map(([label, key, type]) => (
           <div key={key}>
             <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>{label}</label>
-            <input className="input" type={type} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} required={key !== 'phone'} />
+            <input className="input" type={type} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} required={key !== 'phone'}  maxLength={key === 'phone' ? 10 : undefined} />
           </div>
         ))}
         <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: 12, marginTop: 4, fontSize: 15 }} disabled={loading}>
