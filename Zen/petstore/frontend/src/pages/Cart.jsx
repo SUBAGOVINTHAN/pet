@@ -3,6 +3,8 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { resolveImage } from '../utils/resolveImage';
 
+const Rs = () => <span style={{ fontFamily: 'Arial, sans-serif' }}>₹</span>;
+
 export default function Cart() {
   const { cartItems, cartTotal, updateQuantity, removeFromCart, loading } = useCart();
 
@@ -77,7 +79,7 @@ export default function Cart() {
                     {item.name}
                   </h3>
                   <p style={{ color: '#F97316', fontWeight: 700, fontSize: 14, margin: 0 }}>
-                    ₹{(item.discount_price || item.price).toLocaleString()}
+                    <Rs />{(item.discount_price || item.price).toLocaleString()}
                   </p>
                   <p style={{ color: '#9CA3AF', fontSize: 11, marginTop: 2, marginBottom: 0 }}>per unit</p>
                 </div>
@@ -156,7 +158,7 @@ export default function Cart() {
 
                 {/* Line total */}
                 <span style={{ fontWeight: 700, fontSize: 15, color: '#111', flexShrink: 0 }}>
-                  ₹{((item.discount_price || item.price) * item.quantity).toLocaleString()}
+                  <Rs />{((item.discount_price || item.price) * item.quantity).toLocaleString()}
                 </span>
               </div>
 
@@ -179,19 +181,19 @@ export default function Cart() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ color: '#555' }}>Subtotal</span>
-                <span style={{ fontWeight: 600 }}>₹{cartTotal.toFixed(2)}</span>
+                <span style={{ fontWeight: 600 }}><Rs />{cartTotal.toFixed(2)}</span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ color: '#555' }}>Shipping</span>
                 <span style={{ fontWeight: 600 }}>
-                  ₹{shipping} <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>(est.)</span>
+                  <Rs />{shipping} <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>(est.)</span>
                 </span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ color: '#555' }}>Tax (18% GST)</span>
-                <span style={{ fontWeight: 600 }}>₹{tax.toFixed(2)}</span>
+                <span style={{ fontWeight: 600 }}><Rs />{tax.toFixed(2)}</span>
               </div>
 
               <div style={{
@@ -202,7 +204,7 @@ export default function Cart() {
                 fontWeight: 700, fontSize: 17,
               }}>
                 <span>Total</span>
-                <span style={{ color: '#F97316' }}>₹{grand.toFixed(2)}</span>
+                <span style={{ color: '#F97316' }}><Rs />{grand.toFixed(2)}</span>
               </div>
             </div>
 
@@ -218,7 +220,7 @@ export default function Cart() {
             }}>
               🐾 <strong>Tamil Nadu</strong> deliveries:{' '}
               <span style={{ color: '#10B981', fontWeight: 700 }}>FREE shipping!</span><br />
-              📦 Other states: <strong>₹99</strong> flat rate.<br />
+              📦 Other states: <strong><Rs />99</strong> flat rate.<br />
               <span style={{ color: '#9CA3AF' }}>Exact shipping shown at checkout.</span>
             </div>
 
