@@ -33,7 +33,7 @@ function PublicLayout() {
       {/* ✅ FIX: overflowX hidden here at the layout level.
           This prevents any child page from causing horizontal scroll/content shift.
           Do NOT put overflowX:hidden inside individual pages like Home.jsx */}
-      <main style={{ minHeight: '70vh', overflowX: 'hidden' }}>
+     <main style={{ minHeight: '70vh', overflowX: 'clip' }}>
         <Outlet />
       </main>
       <Footer />
