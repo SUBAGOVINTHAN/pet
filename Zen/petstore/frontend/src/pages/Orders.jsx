@@ -4,6 +4,9 @@ import api from '../utils/api';
 import { Package, ArrowLeft, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+// ── Rupee symbol fix ──
+const Rs = () => <span style={{ fontFamily: 'Arial, sans-serif' }}>₹</span>;
+
 // ── Responsive styles ─────────────────────────────────────────────────────────
 const styles = `
   .orders-card-row {
@@ -117,29 +120,6 @@ const styles = `
 `;
 
 // ── Download helper ───────────────────────────────────────────────────────────
-// const downloadInvoice = async (orderId, orderNumber) => {
-//   try {
-//     const token = localStorage.getItem('token');
-//     const res   = await fetch(
-//       `http://localhost:5000/api/orders/${orderId}/invoice`,
-//       { headers: { Authorization: `Bearer ${token}` } }
-//     );
-//     if (!res.ok) throw new Error('Failed');
-//     const blob = await res.blob();
-//     const url  = window.URL.createObjectURL(blob);
-//     const a    = document.createElement('a');
-//     a.href     = url;
-//     a.download = `invoice-${orderNumber}.pdf`;
-//     document.body.appendChild(a);
-//     a.click();
-//     a.remove();
-//     window.URL.revokeObjectURL(url);
-//     toast.success('Invoice downloaded!');
-//   } catch {
-//     toast.error('Failed to download invoice');
-//   }
-// };
-
 const downloadInvoice = async (orderId, orderNumber) => {
   try {
     const res  = await api.get(`/orders/${orderId}/invoice`, { responseType: 'blob' });
@@ -151,13 +131,13 @@ const downloadInvoice = async (orderId, orderNumber) => {
     document.body.appendChild(a);
     a.click();
     a.remove();
-    // Delay revoke so the browser has time to start the download
     setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     toast.success('Invoice downloaded!');
   } catch {
     toast.error('Failed to download invoice');
   }
 };
+
 // ── Orders List ───────────────────────────────────────────────────────────────
 export function Orders() {
   const [orders,  setOrders]  = useState([]);
@@ -216,7 +196,7 @@ export function Orders() {
                   </span>
                   <p className="orders-card-right-amount"
                     style={{ fontWeight: 700, fontSize: 17, marginTop: 6, color: '#F97316' }}>
-                    ₹{parseFloat(order.total_amount).toLocaleString()}
+                    <Rs />{parseFloat(order.total_amount).toLocaleString()}
                   </p>
                   <div className="orders-action-btns">
                     <Link
@@ -230,18 +210,6 @@ export function Orders() {
                     >
                       View Details
                     </Link>
-                    {/* <button
-                      onClick={() => downloadInvoice(order.id, order.order_number)}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                        fontSize: 13, fontWeight: 600,
-                        color: '#fff', background: '#F97316',
-                        border: 'none', borderRadius: 6,
-                        padding: '6px 12px', cursor: 'pointer',
-                      }}
-                    >
-                      <Download size={13} /> Invoice
-                    </button> */}
                   </div>
                 </div>
 
@@ -273,11 +241,12 @@ export function OrderDetail() {
   const discountAmount = parseFloat(order.discount_amount || 0);
   const subtotal       = totalAmount - shippingAmount - taxAmount + discountAmount;
 
+  // ✅ priceRows now uses JSX — so Rs component works
   const priceRows = [
-    ['Subtotal', `₹${subtotal.toFixed(2)}`],
-    ['Shipping', shippingAmount > 0 ? `₹${shippingAmount.toFixed(2)}` : 'FREE'],
-    ['GST',      `₹${taxAmount.toFixed(2)}`],
-    ...(discountAmount > 0 ? [['Discount', `-₹${discountAmount.toFixed(2)}`]] : []),
+    ['Subtotal', <><Rs />{subtotal.toFixed(2)}</>],
+    ['Shipping', shippingAmount > 0 ? <><Rs />{shippingAmount.toFixed(2)}</> : 'FREE'],
+    ['GST',      <><Rs />{taxAmount.toFixed(2)}</>],
+    ...(discountAmount > 0 ? [['Discount', <>-<Rs />{discountAmount.toFixed(2)}</>]] : []),
   ];
 
   return (
@@ -296,21 +265,6 @@ export function OrderDetail() {
           >
             <ArrowLeft size={16} /> Back to Orders
           </Link>
-
-          {/* Desktop invoice button */}
-          {/* <button
-            className="invoice-btn-desktop"
-            onClick={() => downloadInvoice(order.id, order.order_number)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '10px 20px', background: '#F97316',
-              color: '#fff', border: 'none', borderRadius: 8,
-              cursor: 'pointer', fontSize: 14, fontWeight: 700,
-              boxShadow: '0 2px 8px rgba(249,115,22,0.3)',
-            }}
-          >
-            <Download size={16} /> Download Invoice
-          </button> */}
         </div>
 
         {/* Mobile: full-width invoice button */}
@@ -357,7 +311,7 @@ export function OrderDetail() {
                   <p style={{ fontSize: 13, color: '#9CA3AF' }}>Qty: {item.quantity}</p>
                 </div>
                 <p style={{ fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  ₹{(parseFloat(item.price) * item.quantity).toLocaleString()}
+                  <Rs />{(parseFloat(item.price) * item.quantity).toLocaleString()}
                 </p>
               </div>
             ))}
@@ -388,7 +342,7 @@ export function OrderDetail() {
               borderTop: '2px solid #eee', paddingTop: 10, marginTop: 4,
             }}>
               <span>Total</span>
-              <span style={{ color: '#F97316' }}>₹{totalAmount.toLocaleString()}</span>
+              <span style={{ color: '#F97316' }}><Rs />{totalAmount.toLocaleString()}</span>
             </div>
           </div>
 
@@ -403,10 +357,7 @@ export function OrderDetail() {
               {order.payment_status === 'paid' ? '✅ Payment Confirmed' : '⏳ Payment Pending'}
             </span>
             {order.payment_id && (
-              <span style={{
-                fontSize: 11, color: '#9CA3AF',
-                wordBreak: 'break-all',
-              }}>
+              <span style={{ fontSize: 11, color: '#9CA3AF', wordBreak: 'break-all' }}>
                 ID: {order.payment_id}
               </span>
             )}
