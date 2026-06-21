@@ -49,7 +49,6 @@ export default function Home() {
       <section style={{ position: 'relative', background: '#FFF7F0' }}>
   {isMobile ? (
   <>
-    {/* ✅ New full mobile banner image */}
     <div style={{ position: 'relative' }}>
       <img
         src={bannerMobile}
@@ -58,9 +57,10 @@ export default function Home() {
           width: '100%',
           height: 'auto',
           display: 'block',
+          objectFit: 'contain',  // ✅ full image show aagum
+          background: '#FFF7F0'
         }}
       />
-      {/* Shop Now button overlay */}
       <div style={{
         position: 'absolute',
         bottom: 20,
