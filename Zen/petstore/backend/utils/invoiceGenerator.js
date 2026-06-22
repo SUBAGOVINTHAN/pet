@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 export const generateInvoice = async (req, res) => {
   try {
 
-    // ── Auth: accept ?token= query param (email links) OR existing req.user ──
+    // ── Auth: accept ?token= query param OR Authorization header ──
     const queryToken = req.query.token;
     if (queryToken) {
       try {
@@ -13,8 +13,18 @@ export const generateInvoice = async (req, res) => {
       } catch {
         return res.status(401).json({ message: 'Invalid or expired token' });
       }
-    } else if (!req.user) {
-      return res.status(401).json({ message: 'Unauthorized' });
+    } else {
+      // Check Authorization header manually (no middleware)
+      const authHeader = req.headers['authorization'];
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      const token = authHeader.split(' ')[1];
+      try {
+        req.user = jwt.verify(token, process.env.JWT_SECRET);
+      } catch {
+        return res.status(401).json({ message: 'Invalid or expired token' });
+      }
     }
 
     const { id } = req.params;
@@ -57,8 +67,8 @@ export const generateInvoice = async (req, res) => {
     );
     doc.pipe(res);
 
-    const W = doc.page.width;  // 595
-    const M = 50;              // margin
+    const W = doc.page.width;
+    const M = 50;
 
     // ── ORANGE HEADER ────────────────────────────────────────────────────────
     doc.rect(0, 0, W, 80).fill('#F97316');
