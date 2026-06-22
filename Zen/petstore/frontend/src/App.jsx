@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import ScrollToTop from './components/ScrollToTop';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -61,6 +62,7 @@ function RequireAdmin() {
 function AppRoutes() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+       <ScrollToTop />
       <Routes>
 
         {/* ── Public pages with Navbar + Footer ── */}
