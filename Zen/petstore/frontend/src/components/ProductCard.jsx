@@ -166,13 +166,14 @@ export default function ProductCard({ product }) {
 
         {/* ── Price + Add button ── */}
         <div style={{
-          display: "flex", alignItems: "center",
-          justifyContent: "space-between", gap: 6,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 6,
         }}>
-          <div style={{ minWidth: 0, flex: 1, display: "flex", alignItems: "center", gap: 3 }}>
-            
-            {/* Main price */}
-            <span style={{
+          {/* Price block — stacked vertically so nothing gets cut */}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{
               fontWeight: 700,
               fontSize: isMobile ? 13 : 16,
               color: "#1C1C1C",
@@ -180,11 +181,10 @@ export default function ProductCard({ product }) {
             }}>
               <span style={{ fontFamily: "Arial, sans-serif" }}>₹</span>
               {(product.discount_price || product.price).toLocaleString()}
-            </span>
+            </div>
 
-            {/* Strikethrough price - full show, no ellipsis */}
             {product.discount_price && (
-              <span style={{
+              <div style={{
                 fontSize: isMobile ? 10 : 12,
                 color: "#9CA3AF",
                 textDecoration: "line-through",
@@ -192,7 +192,7 @@ export default function ProductCard({ product }) {
               }}>
                 <span style={{ fontFamily: "Arial, sans-serif" }}>₹</span>
                 {product.price.toLocaleString()}
-              </span>
+              </div>
             )}
           </div>
 
@@ -214,6 +214,7 @@ export default function ProductCard({ product }) {
             }
           </button>
         </div>
+
       </div>
     </div>
   );
