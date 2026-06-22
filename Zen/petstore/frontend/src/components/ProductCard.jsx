@@ -128,6 +128,8 @@ export default function ProductCard({ product }) {
 
       {/* ── Card Info ── */}
       <div style={{ padding: isMobile ? "10px" : "16px" }}>
+
+        {/* Category */}
         <p style={{
           fontSize: 10,
           color: "#F97316", fontWeight: 600,
@@ -136,6 +138,7 @@ export default function ProductCard({ product }) {
           {product.category_name || product.pet_type}
         </p>
 
+        {/* Name */}
         <Link to={`/products/${product.slug}`}>
           <h3 style={{
             fontSize: isMobile ? 12 : 14,
@@ -151,8 +154,7 @@ export default function ProductCard({ product }) {
         <div style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: isMobile ? 8 : 12 }}>
           {[1, 2, 3, 4, 5].map((i) => (
             <Star
-              key={i}
-              size={10}
+              key={i} size={10}
               fill={i <= Math.round(product.rating || 0) ? "#F59E0B" : "none"}
               color="#F59E0B"
             />
@@ -167,21 +169,27 @@ export default function ProductCard({ product }) {
           display: "flex", alignItems: "center",
           justifyContent: "space-between", gap: 6,
         }}>
-          <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ minWidth: 0, flex: 1, display: "flex", alignItems: "center", gap: 3, overflow: "hidden" }}>
             <span style={{
               fontWeight: 700,
               fontSize: isMobile ? 13 : 16,
               color: "#1C1C1C",
+              whiteSpace: "nowrap",
             }}>
               <span style={{ fontFamily: "Arial, sans-serif" }}>₹</span>
               {(product.discount_price || product.price).toLocaleString()}
             </span>
+
             {product.discount_price && (
               <span style={{
                 fontSize: isMobile ? 10 : 12,
                 color: "#9CA3AF",
                 textDecoration: "line-through",
-                marginLeft: 3,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: isMobile ? 55 : 80,
+                display: "inline-block",
               }}>
                 <span style={{ fontFamily: "Arial, sans-serif" }}>₹</span>
                 {product.price.toLocaleString()}
@@ -200,7 +208,10 @@ export default function ProductCard({ product }) {
               whiteSpace: "nowrap",
             }}
           >
-            {product.stock === 0 ? "Out" : <><ShoppingCart size={isMobile ? 11 : 13} /> Add</>}
+            {product.stock === 0
+              ? "Out"
+              : <><ShoppingCart size={isMobile ? 11 : 13} /> Add</>
+            }
           </button>
         </div>
       </div>
