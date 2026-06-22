@@ -169,7 +169,9 @@ export default function ProductCard({ product }) {
           display: "flex", alignItems: "center",
           justifyContent: "space-between", gap: 6,
         }}>
-          <div style={{ minWidth: 0, flex: 1, display: "flex", alignItems: "center", gap: 3, overflow: "hidden" }}>
+          <div style={{ minWidth: 0, flex: 1, display: "flex", alignItems: "center", gap: 3 }}>
+            
+            {/* Main price */}
             <span style={{
               fontWeight: 700,
               fontSize: isMobile ? 13 : 16,
@@ -180,16 +182,13 @@ export default function ProductCard({ product }) {
               {(product.discount_price || product.price).toLocaleString()}
             </span>
 
+            {/* Strikethrough price - full show, no ellipsis */}
             {product.discount_price && (
               <span style={{
                 fontSize: isMobile ? 10 : 12,
                 color: "#9CA3AF",
                 textDecoration: "line-through",
                 whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                maxWidth: isMobile ? 55 : 80,
-                display: "inline-block",
               }}>
                 <span style={{ fontFamily: "Arial, sans-serif" }}>₹</span>
                 {product.price.toLocaleString()}
@@ -197,6 +196,7 @@ export default function ProductCard({ product }) {
             )}
           </div>
 
+          {/* Add button */}
           <button
             className="btn btn-primary btn-sm"
             onClick={(e) => { e.preventDefault(); addToCart(product.id); }}
