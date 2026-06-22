@@ -12,47 +12,41 @@ export default function ProductCard({ product }) {
   const { user } = useAuth();
   const imageUrl = resolveImage(product.image);
   const [inWishlist, setInWishlist] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 640);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const discount = product.discount_price
     ? Math.round((1 - product.discount_price / product.price) * 100)
     : null;
 
-  // ── Page load-ல் wishlist check ──
   useEffect(() => {
     if (!user) return;
-    api
-      .get("/wishlist")
-      .then((r) => {
-        const ids = r.data.map((w) => w.product_id);
-        setInWishlist(ids.includes(product.id));
-      })
-      .catch(() => {});
+    api.get("/wishlist").then((r) => {
+      const ids = r.data.map((w) => w.product_id);
+      setInWishlist(ids.includes(product.id));
+    }).catch(() => {});
   }, [user, product.id]);
 
-  // ── Toggle wishlist ──
   const toggleWishlist = async (e) => {
     e.preventDefault();
-    if (!user) {
-      toast.error("Please login first");
-      return;
-    }
-
+    if (!user) { toast.error("Please login first"); return; }
     if (inWishlist) {
       try {
         await api.delete(`/wishlist/${product.id}`);
         setInWishlist(false);
         toast.success("Removed from wishlist");
-      } catch {
-        toast.error("Failed to remove");
-      }
+      } catch { toast.error("Failed to remove"); }
     } else {
       try {
         await api.post("/wishlist", { product_id: product.id });
         setInWishlist(true);
         toast.success("Added to wishlist!");
-      } catch {
-        toast.error("Failed to add");
-      }
+      } catch { toast.error("Failed to add"); }
     }
   };
 
@@ -73,58 +67,43 @@ export default function ProductCard({ product }) {
         e.currentTarget.style.boxShadow = "";
       }}
     >
-      <Link
-        to={`/products/${product.slug}`}
-        style={{ display: "block", position: "relative" }}
-      >
+      <Link to={`/products/${product.slug}`} style={{ display: "block", position: "relative" }}>
+
         {/* ── Image ── */}
         {imageUrl ? (
-          <div
-            style={{
-              width: "100%",
-              height: 200,
-              backgroundColor: "#FFFFFF",
-              backgroundImage: `url(${imageUrl})`,
-              backgroundSize: "contain",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center",
-            }}
-          />
+          <div style={{
+            width: "100%",
+            height: isMobile ? 150 : 200,
+            backgroundColor: "#FFFFFF",
+            backgroundImage: `url(${imageUrl})`,
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+          }} />
         ) : (
-          <div
-            style={{
-              width: "100%",
-              height: 200,
-              background: "#FFF7F0",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#F97316",
-            }}
-          >
+          <div style={{
+            width: "100%",
+            height: isMobile ? 150 : 200,
+            background: "#FFF7F0",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            color: "#F97316",
+          }}>
             <ImageOff size={40} style={{ opacity: 0.4 }} />
-            <p style={{ fontSize: 12, marginTop: 8, color: "#9CA3AF" }}>
-              No image
-            </p>
+            <p style={{ fontSize: 12, marginTop: 8, color: "#9CA3AF" }}>No image</p>
           </div>
         )}
 
         {/* ── Discount badge ── */}
         {discount && (
-          <span
-            style={{
-              position: "absolute",
-              top: 10,
-              left: 10,
-              background: "#F97316",
-              color: "#fff",
-              borderRadius: 6,
-              padding: "2px 8px",
-              fontSize: 12,
-              fontWeight: 700,
-            }}
-          >
+          <span style={{
+            position: "absolute", top: 8, left: 8,
+            background: "#F97316", color: "#fff",
+            borderRadius: 6,
+            padding: isMobile ? "1px 5px" : "2px 8px",
+            fontSize: isMobile ? 10 : 12,
+            fontWeight: 700,
+          }}>
             -{discount}%
           </span>
         )}
@@ -133,133 +112,95 @@ export default function ProductCard({ product }) {
         <button
           onClick={toggleWishlist}
           style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
+            position: "absolute", top: 8, right: 8,
             background: inWishlist ? "#FEE2E2" : "rgba(255,255,255,0.9)",
-            border: "none",
-            borderRadius: "50%",
-            width: 34,
-            height: 34,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            border: "none", borderRadius: "50%",
+            width: isMobile ? 28 : 34,
+            height: isMobile ? 28 : 34,
+            display: "flex", alignItems: "center", justifyContent: "center",
             color: inWishlist ? "#EF4444" : "#F97316",
-            cursor: "pointer",
-            transition: "all 0.2s",
+            cursor: "pointer", transition: "all 0.2s",
           }}
         >
-          <Heart size={16} fill={inWishlist ? "#EF4444" : "none"} />
+          <Heart size={isMobile ? 13 : 16} fill={inWishlist ? "#EF4444" : "none"} />
         </button>
       </Link>
 
       {/* ── Card Info ── */}
-      <div style={{ padding: 16 }}>
-        <p
-          style={{
-            fontSize: 11,
-            color: "#F97316",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            marginBottom: 4,
-          }}
-        >
+      <div style={{ padding: isMobile ? "10px" : "16px" }}>
+        <p style={{
+          fontSize: 10,
+          color: "#F97316", fontWeight: 600,
+          textTransform: "uppercase", marginBottom: 3,
+        }}>
           {product.category_name || product.pet_type}
         </p>
 
         <Link to={`/products/${product.slug}`}>
-          <h3
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              marginBottom: 8,
-              lineHeight: 1.4,
-              color: "#1C1C1C",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <h3 style={{
+            fontSize: isMobile ? 12 : 14,
+            fontWeight: 600, marginBottom: 6,
+            lineHeight: 1.3, color: "#1C1C1C",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>
             {product.name}
           </h3>
         </Link>
 
         {/* ── Stars ── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            marginBottom: 12,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: isMobile ? 8 : 12 }}>
           {[1, 2, 3, 4, 5].map((i) => (
             <Star
               key={i}
-              size={12}
+              size={10}
               fill={i <= Math.round(product.rating || 0) ? "#F59E0B" : "none"}
               color="#F59E0B"
             />
           ))}
-          <span style={{ fontSize: 12, color: "#9CA3AF" }}>
+          <span style={{ fontSize: 10, color: "#9CA3AF" }}>
             ({product.reviews_count || 0})
           </span>
         </div>
 
         {/* ── Price + Add button ── */}
-        {/* ── Price + Add button ── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 8,
-          }}
-        >
+        <div style={{
+          display: "flex", alignItems: "center",
+          justifyContent: "space-between", gap: 6,
+        }}>
           <div style={{ minWidth: 0, flex: 1 }}>
-            {" "}
-            {/* ← minWidth: 0 add panu */}
-            <span style={{ fontWeight: 700, fontSize: 16, color: "#1C1C1C" }}>
-              {" "}
-              {/* ← 18 → 16 */}
+            <span style={{
+              fontWeight: 700,
+              fontSize: isMobile ? 13 : 16,
+              color: "#1C1C1C",
+            }}>
               <span style={{ fontFamily: "Arial, sans-serif" }}>₹</span>
               {(product.discount_price || product.price).toLocaleString()}
             </span>
             {product.discount_price && (
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "#9CA3AF",
-                  textDecoration: "line-through",
-                  marginLeft: 4,
-                }}
-              >
+              <span style={{
+                fontSize: isMobile ? 10 : 12,
+                color: "#9CA3AF",
+                textDecoration: "line-through",
+                marginLeft: 3,
+              }}>
                 <span style={{ fontFamily: "Arial, sans-serif" }}>₹</span>
                 {product.price.toLocaleString()}
               </span>
             )}
           </div>
+
           <button
             className="btn btn-primary btn-sm"
-            onClick={(e) => {
-              e.preventDefault();
-              addToCart(product.id);
-            }}
+            onClick={(e) => { e.preventDefault(); addToCart(product.id); }}
             disabled={product.stock === 0}
             style={{
-              padding: "6px 10px",
-              fontSize: 12,
-              flexShrink: 0, // ← button crush agama
-              whiteSpace: "nowrap", // ← text cut agama
+              padding: isMobile ? "5px 8px" : "6px 12px",
+              fontSize: isMobile ? 11 : 12,
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
-            {product.stock === 0 ? (
-              "Out"
-            ) : (
-              <>
-                <ShoppingCart size={14} /> Add
-              </>
-            )}
+            {product.stock === 0 ? "Out" : <><ShoppingCart size={isMobile ? 11 : 13} /> Add</>}
           </button>
         </div>
       </div>
