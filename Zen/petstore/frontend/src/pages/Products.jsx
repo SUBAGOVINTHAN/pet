@@ -68,14 +68,15 @@ export default function Products() {
       .finally(() => setLoading(false));
   }, [searchParams]);
 
-  const setParam = useCallback((key, val) => {
-    setSearchParams(prev => {
-      const p = new URLSearchParams(prev);
-      if (val) p.set(key, val); else p.delete(key);
-      p.set('page', '1');
-      return p;
-    });
-  }, [setSearchParams]);
+const setParam = useCallback((key, val) => {
+  setSearchParams(prev => {
+    const p = new URLSearchParams(prev);
+    if (val) p.set(key, val); else p.delete(key);
+    if (key !== 'page') p.set('page', '1'); // ← this line change
+    return p;
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}, [setSearchParams]);
 
   const toggleParam = useCallback((key, val) => {
     setSearchParams(prev => {
@@ -350,7 +351,7 @@ export default function Products() {
               {totalPages > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 40, flexWrap: 'wrap' }}>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                    <button key={p} onClick={() => setParam('page', p)}
+                    <button key={p} onClick={() =>setParam('page', String(p))}
                       style={{
                         width: 36, height: 36, borderRadius: 8, border: '1.5px solid',
                         borderColor: page === p ? '#F97316' : '#ddd',
