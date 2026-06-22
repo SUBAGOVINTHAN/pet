@@ -320,11 +320,15 @@ export function OrderDetail() {
           {/* Shipping Address */}
           <div style={{ background: '#FFF7F0', borderRadius: 10, padding: 14, marginBottom: 20 }}>
             <h4 style={{ fontWeight: 700, marginBottom: 8, fontSize: 14 }}>Shipping Address</h4>
+            <p style={{ fontSize: 12, color: '#F97316', marginBottom: 6 }}>
+              <a href="mailto:dotpetfoods@gmail.com" style={{ color: '#F97316', textDecoration: 'none' }}>
+                dotpetfoods@gmail.com
+              </a>
+            </p>
             <p style={{ fontSize: 13, color: '#555', lineHeight: 1.8 }}>
               {order.shipping_name}<br />
-              {order.shipping_address}, {order.shipping_city},<br />
+             {order.shipping_city},<br />
               {order.shipping_state} – {order.shipping_pincode}<br />
-              📞 {order.shipping_phone}
             </p>
           </div>
 
