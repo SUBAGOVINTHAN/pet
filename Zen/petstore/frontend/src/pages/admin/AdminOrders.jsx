@@ -7,8 +7,22 @@ const STATUSES = ['pending','confirmed','processing','shipped','delivered','canc
 
 const downloadInvoice = async (orderId, orderNumber) => {
   try {
-    const res  = await api.get(`/orders/${orderId}/invoice`, { responseType: 'blob' });
-    const blob = new Blob([res.data], { type: 'application/pdf' });
+    const token = localStorage.getItem('token');
+
+    const res = await fetch(`https://pet-diuj.onrender.com/api/orders/${orderId}/invoice`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (res.status === 401) {
+      toast.error('Session expired. Please login again.');
+      return;
+    }
+    if (!res.ok) throw new Error('Failed');
+
+    const blob = await res.blob();
     const url  = window.URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
@@ -18,7 +32,9 @@ const downloadInvoice = async (orderId, orderNumber) => {
     a.remove();
     setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     toast.success('Invoice downloaded!');
-  } catch { toast.error('Failed to download invoice'); }
+  } catch {
+    toast.error('Failed to download invoice');
+  }
 };
 
 export default function AdminOrders() {
