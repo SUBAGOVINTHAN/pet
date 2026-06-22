@@ -28,7 +28,7 @@ export default function Home() {
 
   useEffect(() => {
     Promise.all([
-      api.get('/products?featured=true&limit=8'),
+      api.get('/products?featured=true&limit=30'),
       api.get('/categories')
     ]).then(([prod, cats]) => {
       setFeatured(prod.data.products);
