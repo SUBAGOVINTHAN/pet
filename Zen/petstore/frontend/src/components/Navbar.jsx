@@ -5,6 +5,16 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import logo from '../assets/logo.jpg';
 
+// ✅ Debounce hook
+function useDebounce(value, delay) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
 export default function Navbar() {
   const { user, logout, isAdmin } = useAuth();
   const { cartCount } = useCart();
@@ -13,16 +23,47 @@ export default function Navbar() {
   const [userMenu, setUserMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const userMenuRef = useRef(null);
-  const searchRef = useRef(null);
 
+  // ✅ New suggestion states
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  const userMenuRef = useRef(null);
+  const searchRef = useRef(null);        // desktop search wrapper
+  const mobileSearchRef = useRef(null);  // mobile search wrapper
+
+  const debouncedSearch = useDebounce(search, 300);
+
+  // ✅ Fetch suggestions
+  useEffect(() => {
+    if (debouncedSearch.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    fetch(`${import.meta.env.VITE_API_URL}/products?search=${encodeURIComponent(debouncedSearch)}&limit=6`)
+      .then(r => r.json())
+      .then(data => {
+        setSuggestions(data.products || []);
+        setShowSuggestions(true);
+        setActiveIndex(-1);
+      })
+      .catch(() => setSuggestions([]));
+  }, [debouncedSearch]);
+
+  // ✅ Outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setUserMenu(false);
       }
       if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+      if (mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
         setSearchOpen(false);
+        setShowSuggestions(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -30,11 +71,39 @@ export default function Navbar() {
   }, []);
 
   const handleSearch = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (search.trim()) {
       navigate(`/products?search=${search}`);
       setSearch('');
       setSearchOpen(false);
+      setShowSuggestions(false);
+      setSuggestions([]);
+    }
+  };
+
+  // ✅ Suggestion click
+  const handleSuggestionClick = (product) => {
+    navigate(`/products/${product.slug}`);
+    setSearch('');
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setSearchOpen(false);
+  };
+
+  // ✅ Keyboard navigation
+  const handleKeyDown = (e) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIndex(i => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIndex(i => Math.max(i - 1, -1));
+    } else if (e.key === 'Enter' && activeIndex >= 0) {
+      e.preventDefault();
+      handleSuggestionClick(suggestions[activeIndex]);
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
     }
   };
 
@@ -44,6 +113,67 @@ export default function Navbar() {
     setUserMenu(false);
     setMenuOpen(false);
   };
+
+  // ✅ Reusable dropdown
+  const SuggestionDropdown = () =>
+    showSuggestions && suggestions.length > 0 ? (
+      <div style={{
+        position: 'absolute', top: '110%', left: 0, right: 0,
+        background: '#fff', border: '1px solid #eee',
+        borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+        zIndex: 9999, overflow: 'hidden',
+      }}>
+        {suggestions.map((p, i) => (
+          <div
+            key={p.id}
+            onMouseDown={() => handleSuggestionClick(p)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 14px', cursor: 'pointer',
+              background: activeIndex === i ? '#FFF7F0' : '#fff',
+              borderBottom: i < suggestions.length - 1 ? '1px solid #f5f5f5' : 'none',
+              transition: 'background 0.15s',
+            }}
+          >
+            {p.image ? (
+              <img src={p.image} alt={p.name} style={{
+                width: 36, height: 36, objectFit: 'contain',
+                borderRadius: 6, background: '#f9f9f9', flexShrink: 0
+              }} />
+            ) : (
+              <div style={{ width: 36, height: 36, borderRadius: 6, background: '#FFF7F0', flexShrink: 0 }} />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 13, fontWeight: 600, color: '#1C1C1C',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+              }}>
+                {p.name}
+              </div>
+              <div style={{ fontSize: 12, color: '#F97316', fontWeight: 700 }}>
+                ₹{(p.discount_price || p.price).toLocaleString()}
+                {p.discount_price && (
+                  <span style={{ fontSize: 11, color: '#9CA3AF', textDecoration: 'line-through', marginLeft: 5 }}>
+                    ₹{p.price.toLocaleString()}
+                  </span>
+                )}
+              </div>
+            </div>
+            <Search size={13} style={{ color: '#ccc', flexShrink: 0 }} />
+          </div>
+        ))}
+        <div
+          onMouseDown={handleSearch}
+          style={{
+            padding: '10px 14px', fontSize: 13, fontWeight: 600,
+            color: '#F97316', textAlign: 'center', cursor: 'pointer',
+            background: '#FFF7F0', borderTop: '1px solid #fee',
+          }}
+        >
+          View all results for "{search}" →
+        </div>
+      </div>
+    ) : null;
 
   return (
     <>
@@ -55,10 +185,8 @@ export default function Navbar() {
         zIndex: 100,
         width: '100%',
         boxSizing: 'border-box',
-       overflowX: 'clip'
+        overflowX: 'clip'
       }}>
-        {/* ✅ Removed "container" class — it adds its own padding/max-width
-            that fights with mobile layout. We control padding ourselves. */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -69,69 +197,59 @@ export default function Navbar() {
           gap: 8
         }}>
 
-          {/* Logo */}
+          {/* Logo — unchanged */}
           <Link to="/" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            flexShrink: 0,
-            textDecoration: 'none'
+            display: 'flex', alignItems: 'center', gap: 8,
+            flexShrink: 0, textDecoration: 'none'
           }}>
             <img src={logo} alt="PetStore" style={{
-              height: 40,
-              width: 40,
-              borderRadius: '50%',
-              objectFit: 'cover',
-              border: '2px solid #F97316'
+              height: 40, width: 40, borderRadius: '50%',
+              objectFit: 'cover', border: '2px solid #F97316'
             }} />
             <span className="brand-name" style={{
-              fontWeight: 800,
-              fontSize: 18,
-              color: '#0d0d0d',
-              fontFamily: 'Poppins, sans-serif'
+              fontWeight: 800, fontSize: 18,
+              color: '#0d0d0d', fontFamily: 'Poppins, sans-serif'
             }}>Dot Pet Foods</span>
           </Link>
 
-          {/* Desktop Search */}
-          <form onSubmit={handleSearch} className="desktop-search" style={{
-            flex: 1,
-            display: 'flex',
-            maxWidth: 420,
-            position: 'relative',
-            marginLeft: 8
+          {/* ✅ Desktop Search — same position/style, added ref + suggestions */}
+          <div ref={searchRef} className="desktop-search" style={{
+            flex: 1, display: 'flex', maxWidth: 420,
+            position: 'relative', marginLeft: 8
           }}>
-            <input
-              className="input"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search products, pets..."
-              style={{ paddingRight: 44, borderRadius: 24, width: '100%' }}
-            />
-            <button type="submit" style={{
-              position: 'absolute', right: 12, top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'none', border: 'none',
-              color: '#F97316', cursor: 'pointer'
-            }}>
-              <Search size={18} />
-            </button>
-          </form>
+            <form onSubmit={handleSearch} style={{ width: '100%', position: 'relative' }}>
+              <input
+                className="input"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                placeholder="Search products, pets..."
+                style={{ paddingRight: 44, borderRadius: 24, width: '100%' }}
+                autoComplete="off"
+              />
+              <button type="submit" style={{
+                position: 'absolute', right: 12, top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none', border: 'none',
+                color: '#F97316', cursor: 'pointer'
+              }}>
+                <Search size={18} />
+              </button>
+            </form>
+            {/* ✅ Dropdown below search bar */}
+            <SuggestionDropdown />
+          </div>
 
-          {/* Spacer — pushes icons to the right on mobile */}
+          {/* Spacer — unchanged */}
           <div style={{ flex: 1 }} className="mobile-spacer" />
 
-          {/* Right Side Icons */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0,
-            flexShrink: 0   /* ✅ icon group never shrinks or wraps */
-          }}>
+          {/* Right Side Icons — unchanged */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 0, flexShrink: 0 }}>
 
-            {/* Mobile Search Toggle */}
             <button
               className="mobile-only"
-              onClick={() => setSearchOpen(!searchOpen)}
+              onClick={() => { setSearchOpen(!searchOpen); setShowSuggestions(false); }}
               style={{
                 background: 'none', border: 'none',
                 padding: '8px 6px', color: '#555', cursor: 'pointer',
@@ -141,18 +259,14 @@ export default function Navbar() {
               <Search size={22} />
             </button>
 
-            {/* Wishlist */}
             <Link to="/wishlist" style={{
-              position: 'relative', padding: '8px 6px',
-              color: '#555', display: 'flex'
+              position: 'relative', padding: '8px 6px', color: '#555', display: 'flex'
             }}>
               <Heart size={22} />
             </Link>
 
-            {/* Cart */}
             <Link to="/cart" style={{
-              position: 'relative', padding: '8px 6px',
-              color: '#555', display: 'flex'
+              position: 'relative', padding: '8px 6px', color: '#555', display: 'flex'
             }}>
               <ShoppingCart size={22} />
               {cartCount > 0 && (
@@ -163,7 +277,6 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* Desktop User Menu */}
             {user ? (
               <div className="desktop-only" style={{ position: 'relative', marginLeft: 4 }} ref={userMenuRef}>
                 <button
@@ -172,13 +285,11 @@ export default function Navbar() {
                     display: 'flex', alignItems: 'center', gap: 8,
                     background: '#FFF7F0', border: '1.5px solid #F97316',
                     borderRadius: 24, padding: '6px 14px',
-                    fontWeight: 600, fontSize: 13, color: '#F97316',
-                    cursor: 'pointer'
+                    fontWeight: 600, fontSize: 13, color: '#F97316', cursor: 'pointer'
                   }}
                 >
                   <User size={16} /> {user.name.split(' ')[0]}
                 </button>
-
                 {userMenu && (
                   <div style={{
                     position: 'absolute', right: 0, top: '110%',
@@ -190,23 +301,20 @@ export default function Navbar() {
                       <Link to="/admin" onClick={() => setUserMenu(false)} style={{
                         display: 'flex', alignItems: 'center', gap: 10,
                         padding: '12px 16px', fontSize: 14, fontWeight: 600,
-                        color: '#F97316', borderBottom: '1px solid #eee',
-                        textDecoration: 'none'
+                        color: '#F97316', borderBottom: '1px solid #eee', textDecoration: 'none'
                       }}>
                         <LayoutDashboard size={16} /> Admin Panel
                       </Link>
                     )}
                     <Link to="/profile" onClick={() => setUserMenu(false)} style={{
                       display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '12px 16px', fontSize: 14, color: '#333',
-                      textDecoration: 'none'
+                      padding: '12px 16px', fontSize: 14, color: '#333', textDecoration: 'none'
                     }}>
                       <User size={16} /> My Profile
                     </Link>
                     <Link to="/orders" onClick={() => setUserMenu(false)} style={{
                       display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '12px 16px', fontSize: 14, color: '#333',
-                      textDecoration: 'none'
+                      padding: '12px 16px', fontSize: 14, color: '#333', textDecoration: 'none'
                     }}>
                       <Package size={16} /> My Orders
                     </Link>
@@ -225,29 +333,26 @@ export default function Navbar() {
               <Link to="/login" className="btn btn-primary btn-sm desktop-only" style={{ marginLeft: 4 }}>Login</Link>
             )}
 
-            {/* ✅ Mobile Hamburger — last item, always fully visible */}
             <button
               className="mobile-only"
               onClick={() => setMenuOpen(!menuOpen)}
               style={{
                 background: 'none', border: 'none',
-                padding: '8px 0 8px 6px',
-                color: '#333', cursor: 'pointer',
-                display: 'flex', alignItems: 'center',
-                flexShrink: 0
+                padding: '8px 0 8px 6px', color: '#333', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', flexShrink: 0
               }}
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
+        {/* ✅ Mobile Search — same style, added suggestions */}
         {searchOpen && (
-          <div ref={searchRef} className="mobile-only" style={{
+          <div ref={mobileSearchRef} className="mobile-only" style={{
             padding: '8px 16px 12px',
-            borderTop: '1px solid #f0f0f0'
+            borderTop: '1px solid #f0f0f0',
+            position: 'relative',
           }}>
             <form onSubmit={handleSearch} style={{ position: 'relative' }}>
               <input
@@ -255,8 +360,10 @@ export default function Navbar() {
                 className="input"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Search products, pets..."
                 style={{ paddingRight: 44, borderRadius: 24, width: '100%', boxSizing: 'border-box' }}
+                autoComplete="off"
               />
               <button type="submit" style={{
                 position: 'absolute', right: 12, top: '50%',
@@ -267,44 +374,34 @@ export default function Navbar() {
                 <Search size={18} />
               </button>
             </form>
+            <SuggestionDropdown />
           </div>
         )}
       </nav>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer — unchanged */}
       {menuOpen && (
         <>
-          <div
-            onClick={() => setMenuOpen(false)}
-            style={{
-              position: 'fixed', inset: 0,
-              background: 'rgba(0,0,0,0.35)',
-              zIndex: 200
-            }}
-          />
-
+          <div onClick={() => setMenuOpen(false)} style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.35)', zIndex: 200
+          }} />
           <div style={{
             position: 'fixed', top: 0, right: 0,
-            width: 260, height: '100%',
-            background: '#fff', zIndex: 201,
+            width: 260, height: '100%', background: '#fff', zIndex: 201,
             boxShadow: '-4px 0 24px rgba(0,0,0,0.15)',
-            display: 'flex', flexDirection: 'column',
-            overflowY: 'auto'
+            display: 'flex', flexDirection: 'column', overflowY: 'auto'
           }}>
-            {/* Drawer Header */}
             <div style={{
-              display: 'flex', alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '20px 16px 16px',
-              borderBottom: '1px solid #f0f0f0'
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '20px 16px 16px', borderBottom: '1px solid #f0f0f0'
             }}>
               {user ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{
                     width: 36, height: 36, borderRadius: '50%',
                     background: '#FFF7F0', border: '2px solid #F97316',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#F97316'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F97316'
                   }}>
                     <User size={18} />
                   </div>
@@ -317,25 +414,21 @@ export default function Navbar() {
                 <span style={{ fontWeight: 700, fontSize: 15, color: '#111' }}>Menu</span>
               )}
               <button onClick={() => setMenuOpen(false)} style={{
-                background: 'none', border: 'none',
-                cursor: 'pointer', padding: 4, color: '#555'
+                background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#555'
               }}>
                 <X size={22} />
               </button>
             </div>
 
-            {/* Drawer Links */}
             <div style={{ padding: '8px 0', flex: 1 }}>
               <Link to="/products" onClick={() => setMenuOpen(false)} style={drawerLink}>
                 <Package size={18} style={{ color: '#F97316' }} /> Shop All Products
               </Link>
-
               {user && isAdmin && (
                 <Link to="/admin" onClick={() => setMenuOpen(false)} style={{ ...drawerLink, color: '#F97316', fontWeight: 600 }}>
                   <LayoutDashboard size={18} /> Admin Panel
                 </Link>
               )}
-
               {user && (
                 <>
                   <Link to="/profile" onClick={() => setMenuOpen(false)} style={drawerLink}>
@@ -351,24 +444,21 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Drawer Footer */}
             <div style={{ padding: '12px 16px', borderTop: '1px solid #f0f0f0' }}>
               {user ? (
                 <button onClick={handleLogout} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   gap: 8, width: '100%', padding: '12px',
                   background: '#FEF2F2', border: '1px solid #FECACA',
-                  borderRadius: 10, color: '#EF4444',
-                  fontWeight: 600, fontSize: 14, cursor: 'pointer'
+                  borderRadius: 10, color: '#EF4444', fontWeight: 600, fontSize: 14, cursor: 'pointer'
                 }}>
                   <LogOut size={16} /> Logout
                 </button>
               ) : (
                 <Link to="/login" onClick={() => setMenuOpen(false)} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  padding: '12px', background: '#F97316',
-                  borderRadius: 10, color: '#fff',
-                  fontWeight: 700, fontSize: 14, textDecoration: 'none'
+                  padding: '12px', background: '#F97316', borderRadius: 10,
+                  color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none'
                 }}>
                   Login / Sign Up
                 </Link>
@@ -397,13 +487,7 @@ export default function Navbar() {
 }
 
 const drawerLink = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-  padding: '14px 20px',
-  fontSize: 15,
-  color: '#1C1C1C',
-  textDecoration: 'none',
-  borderBottom: '1px solid #f9f9f9',
-  fontWeight: 500,
+  display: 'flex', alignItems: 'center', gap: 12,
+  padding: '14px 20px', fontSize: 15, color: '#1C1C1C',
+  textDecoration: 'none', borderBottom: '1px solid #f9f9f9', fontWeight: 500,
 };
