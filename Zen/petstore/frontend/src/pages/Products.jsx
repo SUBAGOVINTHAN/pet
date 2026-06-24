@@ -229,15 +229,19 @@ const setParam = useCallback((key, val) => {
             }}
           />
           {/* Drawer */}
-          <div style={{
-            position: 'fixed', top: 0, left: 0, bottom: 0,
-            width: 280, background: '#fff',
-            zIndex: 500, overflowY: 'auto',
-            boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
-            padding: 0,
-          }}>
-            <FilterPanel />
-          </div>
+         
+        <div style={{
+          position: 'fixed', top: 0, left: 0, bottom: 0,
+          width: 280, background: '#fff',
+          zIndex: 500, overflowY: 'auto',
+          boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+          padding: 0,
+        }}
+          onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          <FilterPanel />
+        </div>
         </>
       )}
 
