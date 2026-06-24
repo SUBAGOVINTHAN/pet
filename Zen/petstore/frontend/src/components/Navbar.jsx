@@ -208,9 +208,9 @@ export default function Navbar() {
           </Link>
 
           {/* ✅ Desktop Search with suggestions */}
-          <div ref={searchRef} className="desktop-search" style={{
-            flex: 1, maxWidth: 420, position: 'relative', marginLeft: 8
-          }}>
+         <div ref={searchRef} className="desktop-search" style={{
+          flex: 1, maxWidth: 520, position: 'relative', marginLeft: 8
+        }}>
             <form onSubmit={handleSearch} style={{ display: 'flex', position: 'relative' }}>
               <input
                 className="input"
