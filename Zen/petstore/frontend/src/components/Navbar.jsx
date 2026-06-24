@@ -24,14 +24,13 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  // ✅ New suggestion states
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const userMenuRef = useRef(null);
-  const searchRef = useRef(null);        // desktop search wrapper
-  const mobileSearchRef = useRef(null);  // mobile search wrapper
+  const searchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -81,7 +80,6 @@ export default function Navbar() {
     }
   };
 
-  // ✅ Suggestion click
   const handleSuggestionClick = (product) => {
     navigate(`/products/${product.slug}`);
     setSearch('');
@@ -90,7 +88,6 @@ export default function Navbar() {
     setSearchOpen(false);
   };
 
-  // ✅ Keyboard navigation
   const handleKeyDown = (e) => {
     if (!showSuggestions || suggestions.length === 0) return;
     if (e.key === 'ArrowDown') {
@@ -114,14 +111,17 @@ export default function Navbar() {
     setMenuOpen(false);
   };
 
-  // ✅ Reusable dropdown
+  // ✅ FIX: maxHeight + overflowY added — mobile la full screen cover ஆகாது
   const SuggestionDropdown = () =>
     showSuggestions && suggestions.length > 0 ? (
       <div style={{
         position: 'absolute', top: '110%', left: 0, right: 0,
         background: '#fff', border: '1px solid #eee',
         borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-        zIndex: 9999, overflow: 'hidden',
+        zIndex: 9999,
+        maxHeight: '45vh',      // ✅ Screen-ல் 45% மட்டும் occupy பண்ணும்
+        overflowY: 'auto',      // ✅ மிகுதி results scroll பண்ண முடியும்
+        overflowX: 'hidden',
       }}>
         {suggestions.map((p, i) => (
           <div
@@ -197,7 +197,7 @@ export default function Navbar() {
           gap: 8
         }}>
 
-          {/* Logo — unchanged */}
+          {/* Logo */}
           <Link to="/" style={{
             display: 'flex', alignItems: 'center', gap: 8,
             flexShrink: 0, textDecoration: 'none'
@@ -212,7 +212,7 @@ export default function Navbar() {
             }}>Dot Pet Foods</span>
           </Link>
 
-          {/* ✅ Desktop Search — same position/style, added ref + suggestions */}
+          {/* Desktop Search */}
           <div ref={searchRef} className="desktop-search" style={{
             flex: 1, display: 'flex', maxWidth: 420,
             position: 'relative', marginLeft: 8
@@ -237,14 +237,13 @@ export default function Navbar() {
                 <Search size={18} />
               </button>
             </form>
-            {/* ✅ Dropdown below search bar */}
             <SuggestionDropdown />
           </div>
 
-          {/* Spacer — unchanged */}
+          {/* Spacer */}
           <div style={{ flex: 1 }} className="mobile-spacer" />
 
-          {/* Right Side Icons — unchanged */}
+          {/* Right Side Icons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 0, flexShrink: 0 }}>
 
             <button
@@ -347,7 +346,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* ✅ Mobile Search — same style, added suggestions */}
+        {/* Mobile Search */}
         {searchOpen && (
           <div ref={mobileSearchRef} className="mobile-only" style={{
             padding: '8px 16px 12px',
@@ -379,7 +378,7 @@ export default function Navbar() {
         )}
       </nav>
 
-      {/* Mobile Drawer — unchanged */}
+      {/* Mobile Drawer */}
       {menuOpen && (
         <>
           <div onClick={() => setMenuOpen(false)} style={{
