@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, User, Search, LogOut, Package, LayoutDashboard, X, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -67,7 +67,7 @@ export default function Navbar() {
   }, []);
 
   const handleSearch = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (search.trim()) {
       navigate(`/products?search=${search}`);
       setSearch('');
@@ -109,14 +109,14 @@ export default function Navbar() {
     setMenuOpen(false);
   };
 
-  // ✅ Reusable suggestion dropdown
+  // ✅ Suggestion Dropdown component
   const SuggestionDropdown = () => (
     showSuggestions && suggestions.length > 0 ? (
       <div style={{
         position: 'absolute', top: '110%', left: 0, right: 0,
         background: '#fff', border: '1px solid #eee',
         borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-        zIndex: 999, overflow: 'hidden',
+        zIndex: 9999, overflow: 'hidden',
       }}>
         {suggestions.map((p, i) => (
           <div
@@ -130,7 +130,6 @@ export default function Navbar() {
               transition: 'background 0.15s',
             }}
           >
-            {/* Product image */}
             {p.image ? (
               <img src={p.image} alt={p.name}
                 style={{ width: 36, height: 36, objectFit: 'contain', borderRadius: 6, background: '#f9f9f9', flexShrink: 0 }}
@@ -138,7 +137,6 @@ export default function Navbar() {
             ) : (
               <div style={{ width: 36, height: 36, borderRadius: 6, background: '#FFF7F0', flexShrink: 0 }} />
             )}
-            {/* Name + price */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1C', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {p.name}
@@ -155,7 +153,7 @@ export default function Navbar() {
             <Search size={13} style={{ color: '#ccc', flexShrink: 0 }} />
           </div>
         ))}
-        {/* View all results */}
+        {/* View all */}
         <div
           onMouseDown={handleSearch}
           style={{
@@ -207,28 +205,39 @@ export default function Navbar() {
             }}>Dot Pet Foods</span>
           </Link>
 
-          {/* ✅ Desktop Search with suggestions */}
-         <div ref={searchRef} className="desktop-search" style={{
-          flex: 1, maxWidth: 520, position: 'relative', marginLeft: 8
-        }}>
-            <form onSubmit={handleSearch} style={{ display: 'flex', position: 'relative' }}>
-              <input
-                className="input"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                placeholder="Search products, pets..."
-                style={{ paddingRight: 44, borderRadius: 24, width: '100%' }}
-                autoComplete="off"
-              />
+          {/* ✅ Desktop Search - Image 2 style (wider + orange circle button) */}
+          <div ref={searchRef} className="desktop-search" style={{
+            flex: 1, maxWidth: 500, position: 'relative', marginLeft: 16
+          }}>
+            <form onSubmit={handleSearch} style={{
+              display: 'flex', alignItems: 'center', gap: 8
+            }}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input
+                  className="input"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  placeholder="Search products, pets..."
+                  style={{
+                    paddingLeft: 16, paddingRight: 16,
+                    borderRadius: 24, width: '100%',
+                    boxSizing: 'border-box',
+                    border: '1.5px solid #e5e7eb',
+                    height: 40, fontSize: 14, outline: 'none',
+                  }}
+                  autoComplete="off"
+                />
+              </div>
+              {/* ✅ Orange circle search button — outside input */}
               <button type="submit" style={{
-                position: 'absolute', right: 12, top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none', border: 'none',
-                color: '#F97316', cursor: 'pointer'
+                width: 40, height: 40, borderRadius: '50%',
+                background: '#F97316', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0,
               }}>
-                <Search size={18} />
+                <Search size={18} color="#fff" />
               </button>
             </form>
             <SuggestionDropdown />
@@ -238,7 +247,10 @@ export default function Navbar() {
           <div style={{ flex: 1 }} className="mobile-spacer" />
 
           {/* Right Side Icons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 0, flexShrink: 0 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center',
+            gap: 0, flexShrink: 0
+          }}>
 
             {/* Mobile Search Toggle */}
             <button
@@ -255,19 +267,22 @@ export default function Navbar() {
 
             {/* Wishlist */}
             <Link to="/wishlist" style={{
-              position: 'relative', padding: '8px 6px', color: '#555', display: 'flex'
+              position: 'relative', padding: '8px 6px',
+              color: '#555', display: 'flex'
             }}>
               <Heart size={22} />
             </Link>
 
             {/* Cart */}
             <Link to="/cart" style={{
-              position: 'relative', padding: '8px 6px', color: '#555', display: 'flex'
+              position: 'relative', padding: '8px 6px',
+              color: '#555', display: 'flex'
             }}>
               <ShoppingCart size={22} />
               {cartCount > 0 && (
                 <span className="badge" style={{
-                  position: 'absolute', top: 2, right: 2, width: 18, height: 18, fontSize: 10
+                  position: 'absolute', top: 2, right: 2,
+                  width: 18, height: 18, fontSize: 10
                 }}>{cartCount}</span>
               )}
             </Link>
@@ -281,7 +296,8 @@ export default function Navbar() {
                     display: 'flex', alignItems: 'center', gap: 8,
                     background: '#FFF7F0', border: '1.5px solid #F97316',
                     borderRadius: 24, padding: '6px 14px',
-                    fontWeight: 600, fontSize: 13, color: '#F97316', cursor: 'pointer'
+                    fontWeight: 600, fontSize: 13, color: '#F97316',
+                    cursor: 'pointer'
                   }}
                 >
                   <User size={16} /> {user.name.split(' ')[0]}
@@ -298,20 +314,23 @@ export default function Navbar() {
                       <Link to="/admin" onClick={() => setUserMenu(false)} style={{
                         display: 'flex', alignItems: 'center', gap: 10,
                         padding: '12px 16px', fontSize: 14, fontWeight: 600,
-                        color: '#F97316', borderBottom: '1px solid #eee', textDecoration: 'none'
+                        color: '#F97316', borderBottom: '1px solid #eee',
+                        textDecoration: 'none'
                       }}>
                         <LayoutDashboard size={16} /> Admin Panel
                       </Link>
                     )}
                     <Link to="/profile" onClick={() => setUserMenu(false)} style={{
                       display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '12px 16px', fontSize: 14, color: '#333', textDecoration: 'none'
+                      padding: '12px 16px', fontSize: 14, color: '#333',
+                      textDecoration: 'none'
                     }}>
                       <User size={16} /> My Profile
                     </Link>
                     <Link to="/orders" onClick={() => setUserMenu(false)} style={{
                       display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '12px 16px', fontSize: 14, color: '#333', textDecoration: 'none'
+                      padding: '12px 16px', fontSize: 14, color: '#333',
+                      textDecoration: 'none'
                     }}>
                       <Package size={16} /> My Orders
                     </Link>
@@ -338,7 +357,8 @@ export default function Navbar() {
                 background: 'none', border: 'none',
                 padding: '8px 0 8px 6px',
                 color: '#333', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', flexShrink: 0
+                display: 'flex', alignItems: 'center',
+                flexShrink: 0
               }}
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -346,31 +366,41 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* ✅ Mobile Search Bar with suggestions */}
+        {/* ✅ Mobile Search with suggestions */}
         {searchOpen && (
           <div ref={mobileSearchRef} className="mobile-only" style={{
             padding: '8px 16px 12px',
             borderTop: '1px solid #f0f0f0',
             position: 'relative',
           }}>
-            <form onSubmit={handleSearch} style={{ position: 'relative' }}>
-              <input
-                autoFocus
-                className="input"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Search products, pets..."
-                style={{ paddingRight: 44, borderRadius: 24, width: '100%', boxSizing: 'border-box' }}
-                autoComplete="off"
-              />
+            <form onSubmit={handleSearch} style={{
+              display: 'flex', alignItems: 'center', gap: 8
+            }}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input
+                  autoFocus
+                  className="input"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Search products, pets..."
+                  style={{
+                    paddingLeft: 16, paddingRight: 16,
+                    borderRadius: 24, width: '100%',
+                    boxSizing: 'border-box',
+                    border: '1.5px solid #e5e7eb',
+                    height: 40, fontSize: 14, outline: 'none',
+                  }}
+                  autoComplete="off"
+                />
+              </div>
               <button type="submit" style={{
-                position: 'absolute', right: 12, top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none', border: 'none',
-                color: '#F97316', cursor: 'pointer'
+                width: 40, height: 40, borderRadius: '50%',
+                background: '#F97316', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0,
               }}>
-                <Search size={18} />
+                <Search size={18} color="#fff" />
               </button>
             </form>
             <SuggestionDropdown />
@@ -393,7 +423,8 @@ export default function Navbar() {
             width: 260, height: '100%',
             background: '#fff', zIndex: 201,
             boxShadow: '-4px 0 24px rgba(0,0,0,0.15)',
-            display: 'flex', flexDirection: 'column', overflowY: 'auto'
+            display: 'flex', flexDirection: 'column',
+            overflowY: 'auto'
           }}>
             <div style={{
               display: 'flex', alignItems: 'center',
@@ -406,7 +437,8 @@ export default function Navbar() {
                   <div style={{
                     width: 36, height: 36, borderRadius: '50%',
                     background: '#FFF7F0', border: '2px solid #F97316',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F97316'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#F97316'
                   }}>
                     <User size={18} />
                   </div>
@@ -419,7 +451,8 @@ export default function Navbar() {
                 <span style={{ fontWeight: 700, fontSize: 15, color: '#111' }}>Menu</span>
               )}
               <button onClick={() => setMenuOpen(false)} style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#555'
+                background: 'none', border: 'none',
+                cursor: 'pointer', padding: 4, color: '#555'
               }}>
                 <X size={22} />
               </button>
@@ -455,7 +488,8 @@ export default function Navbar() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   gap: 8, width: '100%', padding: '12px',
                   background: '#FEF2F2', border: '1px solid #FECACA',
-                  borderRadius: 10, color: '#EF4444', fontWeight: 600, fontSize: 14, cursor: 'pointer'
+                  borderRadius: 10, color: '#EF4444',
+                  fontWeight: 600, fontSize: 14, cursor: 'pointer'
                 }}>
                   <LogOut size={16} /> Logout
                 </button>
@@ -463,7 +497,8 @@ export default function Navbar() {
                 <Link to="/login" onClick={() => setMenuOpen(false)} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   padding: '12px', background: '#F97316',
-                  borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none'
+                  borderRadius: 10, color: '#fff',
+                  fontWeight: 700, fontSize: 14, textDecoration: 'none'
                 }}>
                   Login / Sign Up
                 </Link>
