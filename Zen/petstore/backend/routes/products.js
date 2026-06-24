@@ -31,12 +31,12 @@ router.get('/', async (req, res) => {
     if (category) { query += ' AND c.slug = ?'; params.push(category); }
     if (search) { query += ' AND (p.name LIKE ? OR p.description LIKE ?)'; params.push(`%${search}%`, `%${search}%`); }
     if (pet_type) { query += ' AND p.pet_type = ?'; params.push(pet_type); }
-    if (min_price) { query += ' AND p.price >= ?'; params.push(min_price); }
-    if (max_price) { query += ' AND p.price <= ?'; params.push(max_price); }
+   if (min_price) { query += ' AND COALESCE(p.discount_price, p.price) >= ?'; params.push(min_price); }
+   if (max_price) { query += ' AND COALESCE(p.discount_price, p.price) <= ?'; params.push(max_price); }
     if (featured === 'true') { query += ' AND p.is_featured = 1'; }
 
-    if (sort === 'price_asc') query += ' ORDER BY p.price ASC';
-    else if (sort === 'price_desc') query += ' ORDER BY p.price DESC';
+   if (sort === 'price_asc') query += ' ORDER BY COALESCE(p.discount_price, p.price) ASC';
+   else if (sort === 'price_desc') query += ' ORDER BY COALESCE(p.discount_price, p.price) DESC';
     else if (sort === 'rating') query += ' ORDER BY p.rating DESC';
     else query += ' ORDER BY p.created_at DESC';
 
