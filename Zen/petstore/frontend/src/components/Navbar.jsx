@@ -5,16 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import logo from '../assets/logo.jpg';
 
-// ✅ Debounce hook
-function useDebounce(value, delay) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return debounced;
-}
-
 export default function Navbar() {
   const { user, logout, isAdmin } = useAuth();
   const { cartCount } = useCart();
@@ -23,31 +13,8 @@ export default function Navbar() {
   const [userMenu, setUserMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(-1);
   const userMenuRef = useRef(null);
   const searchRef = useRef(null);
-  const mobileSearchRef = useRef(null);
-
-  const debouncedSearch = useDebounce(search, 300);
-
-  // ✅ Fetch suggestions
-  useEffect(() => {
-    if (debouncedSearch.trim().length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-    fetch(`${import.meta.env.VITE_API_URL}/products?search=${encodeURIComponent(debouncedSearch)}&limit=6`)
-      .then(r => r.json())
-      .then(data => {
-        setSuggestions(data.products || []);
-        setShowSuggestions(true);
-        setActiveIndex(-1);
-      })
-      .catch(() => setSuggestions([]));
-  }, [debouncedSearch]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -55,11 +22,7 @@ export default function Navbar() {
         setUserMenu(false);
       }
       if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setShowSuggestions(false);
-      }
-      if (mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
         setSearchOpen(false);
-        setShowSuggestions(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -67,38 +30,11 @@ export default function Navbar() {
   }, []);
 
   const handleSearch = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
+    e.preventDefault();
     if (search.trim()) {
       navigate(`/products?search=${search}`);
       setSearch('');
       setSearchOpen(false);
-      setShowSuggestions(false);
-      setSuggestions([]);
-    }
-  };
-
-  const handleSuggestionClick = (product) => {
-    navigate(`/products/${product.slug}`);
-    setSearch('');
-    setShowSuggestions(false);
-    setSuggestions([]);
-    setSearchOpen(false);
-  };
-
-  // ✅ Keyboard navigation
-  const handleKeyDown = (e) => {
-    if (!showSuggestions || suggestions.length === 0) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActiveIndex(i => Math.min(i + 1, suggestions.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActiveIndex(i => Math.max(i - 1, -1));
-    } else if (e.key === 'Enter' && activeIndex >= 0) {
-      e.preventDefault();
-      handleSuggestionClick(suggestions[activeIndex]);
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false);
     }
   };
 
@@ -108,65 +44,6 @@ export default function Navbar() {
     setUserMenu(false);
     setMenuOpen(false);
   };
-
-  // ✅ Suggestion Dropdown component
-  const SuggestionDropdown = () => (
-    showSuggestions && suggestions.length > 0 ? (
-      <div style={{
-        position: 'absolute', top: '110%', left: 0, right: 0,
-        background: '#fff', border: '1px solid #eee',
-        borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-        zIndex: 9999, overflow: 'hidden',
-      }}>
-        {suggestions.map((p, i) => (
-          <div
-            key={p.id}
-            onMouseDown={() => handleSuggestionClick(p)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 14px', cursor: 'pointer',
-              background: activeIndex === i ? '#FFF7F0' : '#fff',
-              borderBottom: i < suggestions.length - 1 ? '1px solid #f5f5f5' : 'none',
-              transition: 'background 0.15s',
-            }}
-          >
-            {p.image ? (
-              <img src={p.image} alt={p.name}
-                style={{ width: 36, height: 36, objectFit: 'contain', borderRadius: 6, background: '#f9f9f9', flexShrink: 0 }}
-              />
-            ) : (
-              <div style={{ width: 36, height: 36, borderRadius: 6, background: '#FFF7F0', flexShrink: 0 }} />
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1C', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {p.name}
-              </div>
-              <div style={{ fontSize: 12, color: '#F97316', fontWeight: 700 }}>
-                ₹{(p.discount_price || p.price).toLocaleString()}
-                {p.discount_price && (
-                  <span style={{ fontSize: 11, color: '#9CA3AF', textDecoration: 'line-through', marginLeft: 5 }}>
-                    ₹{p.price.toLocaleString()}
-                  </span>
-                )}
-              </div>
-            </div>
-            <Search size={13} style={{ color: '#ccc', flexShrink: 0 }} />
-          </div>
-        ))}
-        {/* View all */}
-        <div
-          onMouseDown={handleSearch}
-          style={{
-            padding: '10px 14px', fontSize: 13, fontWeight: 600,
-            color: '#F97316', textAlign: 'center', cursor: 'pointer',
-            background: '#FFF7F0', borderTop: '1px solid #fee',
-          }}
-        >
-          View all results for "{search}" →
-        </div>
-      </div>
-    ) : null
-  );
 
   return (
     <>
@@ -178,8 +55,10 @@ export default function Navbar() {
         zIndex: 100,
         width: '100%',
         boxSizing: 'border-box',
-        overflowX: 'clip'
+       overflowX: 'clip'
       }}>
+        {/* ✅ Removed "container" class — it adds its own padding/max-width
+            that fights with mobile layout. We control padding ourselves. */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -192,70 +71,67 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            flexShrink: 0, textDecoration: 'none'
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexShrink: 0,
+            textDecoration: 'none'
           }}>
             <img src={logo} alt="PetStore" style={{
-              height: 40, width: 40, borderRadius: '50%',
-              objectFit: 'cover', border: '2px solid #F97316'
+              height: 40,
+              width: 40,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid #F97316'
             }} />
             <span className="brand-name" style={{
-              fontWeight: 800, fontSize: 18,
-              color: '#0d0d0d', fontFamily: 'Poppins, sans-serif'
+              fontWeight: 800,
+              fontSize: 18,
+              color: '#0d0d0d',
+              fontFamily: 'Poppins, sans-serif'
             }}>Dot Pet Foods</span>
           </Link>
 
-          {/* ✅ Desktop Search - Image 2 style (wider + orange circle button) */}
-          <div ref={searchRef} className="desktop-search" style={{
-            flex: 1, maxWidth: 500, position: 'relative', marginLeft: 16
+          {/* Desktop Search */}
+          <form onSubmit={handleSearch} className="desktop-search" style={{
+            flex: 1,
+            display: 'flex',
+            maxWidth: 420,
+            position: 'relative',
+            marginLeft: 8
           }}>
-            <form onSubmit={handleSearch} style={{
-              display: 'flex', alignItems: 'center', gap: 8
+            <input
+              className="input"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search products, pets..."
+              style={{ paddingRight: 44, borderRadius: 24, width: '100%' }}
+            />
+            <button type="submit" style={{
+              position: 'absolute', right: 12, top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none', border: 'none',
+              color: '#F97316', cursor: 'pointer'
             }}>
-              <div style={{ flex: 1, position: 'relative' }}>
-                <input
-                  className="input"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                  placeholder="Search products, pets..."
-                  style={{
-                    paddingLeft: 16, paddingRight: 16,
-                    borderRadius: 24, width: '100%',
-                    boxSizing: 'border-box',
-                    border: '1.5px solid #e5e7eb',
-                    height: 40, fontSize: 14, outline: 'none',
-                  }}
-                  autoComplete="off"
-                />
-              </div>
-              {/* ✅ Orange circle search button — outside input */}
-              <button type="submit" style={{
-                width: 40, height: 40, borderRadius: '50%',
-                background: '#F97316', border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', flexShrink: 0,
-              }}>
-                <Search size={18} color="#fff" />
-              </button>
-            </form>
-            <SuggestionDropdown />
-          </div>
+              <Search size={18} />
+            </button>
+          </form>
 
-          {/* Spacer */}
+          {/* Spacer — pushes icons to the right on mobile */}
           <div style={{ flex: 1 }} className="mobile-spacer" />
 
           {/* Right Side Icons */}
           <div style={{
-            display: 'flex', alignItems: 'center',
-            gap: 0, flexShrink: 0
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0,
+            flexShrink: 0   /* ✅ icon group never shrinks or wraps */
           }}>
 
             {/* Mobile Search Toggle */}
             <button
               className="mobile-only"
-              onClick={() => { setSearchOpen(!searchOpen); setShowSuggestions(false); }}
+              onClick={() => setSearchOpen(!searchOpen)}
               style={{
                 background: 'none', border: 'none',
                 padding: '8px 6px', color: '#555', cursor: 'pointer',
@@ -349,7 +225,7 @@ export default function Navbar() {
               <Link to="/login" className="btn btn-primary btn-sm desktop-only" style={{ marginLeft: 4 }}>Login</Link>
             )}
 
-            {/* Mobile Hamburger */}
+            {/* ✅ Mobile Hamburger — last item, always fully visible */}
             <button
               className="mobile-only"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -363,47 +239,34 @@ export default function Navbar() {
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
+
           </div>
         </div>
 
-        {/* ✅ Mobile Search with suggestions */}
+        {/* Mobile Search Bar */}
         {searchOpen && (
-          <div ref={mobileSearchRef} className="mobile-only" style={{
+          <div ref={searchRef} className="mobile-only" style={{
             padding: '8px 16px 12px',
-            borderTop: '1px solid #f0f0f0',
-            position: 'relative',
+            borderTop: '1px solid #f0f0f0'
           }}>
-            <form onSubmit={handleSearch} style={{
-              display: 'flex', alignItems: 'center', gap: 8
-            }}>
-              <div style={{ flex: 1, position: 'relative' }}>
-                <input
-                  autoFocus
-                  className="input"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Search products, pets..."
-                  style={{
-                    paddingLeft: 16, paddingRight: 16,
-                    borderRadius: 24, width: '100%',
-                    boxSizing: 'border-box',
-                    border: '1.5px solid #e5e7eb',
-                    height: 40, fontSize: 14, outline: 'none',
-                  }}
-                  autoComplete="off"
-                />
-              </div>
+            <form onSubmit={handleSearch} style={{ position: 'relative' }}>
+              <input
+                autoFocus
+                className="input"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search products, pets..."
+                style={{ paddingRight: 44, borderRadius: 24, width: '100%', boxSizing: 'border-box' }}
+              />
               <button type="submit" style={{
-                width: 40, height: 40, borderRadius: '50%',
-                background: '#F97316', border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', flexShrink: 0,
+                position: 'absolute', right: 12, top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none', border: 'none',
+                color: '#F97316', cursor: 'pointer'
               }}>
-                <Search size={18} color="#fff" />
+                <Search size={18} />
               </button>
             </form>
-            <SuggestionDropdown />
           </div>
         )}
       </nav>
@@ -415,9 +278,11 @@ export default function Navbar() {
             onClick={() => setMenuOpen(false)}
             style={{
               position: 'fixed', inset: 0,
-              background: 'rgba(0,0,0,0.35)', zIndex: 200
+              background: 'rgba(0,0,0,0.35)',
+              zIndex: 200
             }}
           />
+
           <div style={{
             position: 'fixed', top: 0, right: 0,
             width: 260, height: '100%',
@@ -426,6 +291,7 @@ export default function Navbar() {
             display: 'flex', flexDirection: 'column',
             overflowY: 'auto'
           }}>
+            {/* Drawer Header */}
             <div style={{
               display: 'flex', alignItems: 'center',
               justifyContent: 'space-between',
@@ -458,15 +324,18 @@ export default function Navbar() {
               </button>
             </div>
 
+            {/* Drawer Links */}
             <div style={{ padding: '8px 0', flex: 1 }}>
               <Link to="/products" onClick={() => setMenuOpen(false)} style={drawerLink}>
                 <Package size={18} style={{ color: '#F97316' }} /> Shop All Products
               </Link>
+
               {user && isAdmin && (
                 <Link to="/admin" onClick={() => setMenuOpen(false)} style={{ ...drawerLink, color: '#F97316', fontWeight: 600 }}>
                   <LayoutDashboard size={18} /> Admin Panel
                 </Link>
               )}
+
               {user && (
                 <>
                   <Link to="/profile" onClick={() => setMenuOpen(false)} style={drawerLink}>
@@ -482,6 +351,7 @@ export default function Navbar() {
               )}
             </div>
 
+            {/* Drawer Footer */}
             <div style={{ padding: '12px 16px', borderTop: '1px solid #f0f0f0' }}>
               {user ? (
                 <button onClick={handleLogout} style={{
@@ -527,7 +397,13 @@ export default function Navbar() {
 }
 
 const drawerLink = {
-  display: 'flex', alignItems: 'center', gap: 12,
-  padding: '14px 20px', fontSize: 15, color: '#1C1C1C',
-  textDecoration: 'none', borderBottom: '1px solid #f9f9f9', fontWeight: 500,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: '14px 20px',
+  fontSize: 15,
+  color: '#1C1C1C',
+  textDecoration: 'none',
+  borderBottom: '1px solid #f9f9f9',
+  fontWeight: 500,
 };
