@@ -12,105 +12,6 @@ const SORT_OPTIONS = [
   { value: 'rating',     label: 'Top Rated' },
 ];
 
-// ✅ Products() function-க்கு வெளியே define பண்ணு
-const FilterPanel = ({
-  isDesktop, categories, category, pet_type_val,
-  minPrice, maxPrice, setMinPrice, setMaxPrice,
-  applyPrice, clearAll, toggleParam, setShowFilter
-}) => (
-  <div style={{
-    background: '#fff', borderRadius: isDesktop ? 12 : 0,
-    padding: 20, border: isDesktop ? '1px solid #eee' : 'none',
-    position: isDesktop ? 'sticky' : 'static', top: 90,
-    height: isDesktop ? 'auto' : '100%',
-  }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-      <h3 style={{ fontWeight: 700, fontSize: 16 }}>Filters</h3>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button onClick={clearAll} style={{ fontSize: 12, color: '#F97316', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
-          Clear All
-        </button>
-        {!isDesktop && (
-          <button onClick={() => setShowFilter(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#6b7280' }}>
-            <X size={18} />
-          </button>
-        )}
-      </div>
-    </div>
-
-    {/* Categories */}
-    <div style={{ marginBottom: 20 }}>
-      <h4 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#888', letterSpacing: 1 }}>CATEGORIES</h4>
-      {categories.map(c => (
-        <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, cursor: 'pointer', fontSize: 14 }}>
-          <input
-            type="radio"
-            name="cat"
-            checked={category === c.slug}
-            onChange={() => toggleParam('category', c.slug)}
-          />
-          {c.name}
-        </label>
-      ))}
-    </div>
-
-    {/* Pet Type */}
-    <div style={{ marginBottom: 20 }}>
-      <h4 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#888', letterSpacing: 1 }}>PET TYPE</h4>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {PET_TYPES.map(t => (
-          <button key={t}
-            onClick={() => toggleParam('pet_type', t)}
-            style={{
-              padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-              border: '1.5px solid',
-              borderColor: pet_type_val === t ? '#F97316' : '#ddd',
-              background:  pet_type_val === t ? '#FFF7F0' : '#fff',
-              color:       pet_type_val === t ? '#F97316' : '#555',
-              cursor: 'pointer', textTransform: 'capitalize',
-            }}>
-            {t}
-          </button>
-        ))}
-      </div>
-    </div>
-
-    {/* Price Range */}
-    <div>
-      <h4 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#888', letterSpacing: 1 }}>PRICE RANGE</h4>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        <input
-          placeholder="Min"
-          value={minPrice}
-          type="number"
-          min={0}
-          onChange={e => setMinPrice(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && applyPrice()}
-          style={{ flex: 1, padding: '7px 10px', fontSize: 13, border: '1px solid #ddd', borderRadius: 8, outline: 'none', minWidth: 0 }}
-        />
-        <input
-          placeholder="Max"
-          value={maxPrice}
-          type="number"
-          min={0}
-          onChange={e => setMaxPrice(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && applyPrice()}
-          style={{ flex: 1, padding: '7px 10px', fontSize: 13, border: '1px solid #ddd', borderRadius: 8, outline: 'none', minWidth: 0 }}
-        />
-      </div>
-      <button
-        onClick={applyPrice}
-        style={{
-          width: '100%', padding: '8px 0', borderRadius: 8, fontSize: 13,
-          fontWeight: 600, background: '#F97316', color: '#fff',
-          border: 'none', cursor: 'pointer',
-        }}>
-        Apply Price
-      </button>
-    </div>
-  </div>
-);
-
 export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products,   setProducts]   = useState([]);
@@ -167,15 +68,15 @@ export default function Products() {
       .finally(() => setLoading(false));
   }, [searchParams]);
 
-  const setParam = useCallback((key, val) => {
-    setSearchParams(prev => {
-      const p = new URLSearchParams(prev);
-      if (val) p.set(key, val); else p.delete(key);
-      if (key !== 'page') p.set('page', '1');
-      return p;
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [setSearchParams]);
+const setParam = useCallback((key, val) => {
+  setSearchParams(prev => {
+    const p = new URLSearchParams(prev);
+    if (val) p.set(key, val); else p.delete(key);
+    if (key !== 'page') p.set('page', '1'); // ← this line change
+    return p;
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}, [setSearchParams]);
 
   const toggleParam = useCallback((key, val) => {
     setSearchParams(prev => {
@@ -212,13 +113,100 @@ export default function Products() {
     setMaxPrice(searchParams.get('max_price') || '');
   }, [searchParams]);
 
-  // ✅ Common props object
-  const filterProps = {
-    isDesktop, categories, category,
-    pet_type_val: pet_type,
-    minPrice, maxPrice, setMinPrice, setMaxPrice,
-    applyPrice, clearAll, toggleParam, setShowFilter,
-  };
+  // Filter panel content — shared between sidebar and drawer
+  const FilterPanel = () => (
+    <div style={{
+      background: '#fff', borderRadius: isDesktop ? 12 : 0,
+      padding: 20, border: isDesktop ? '1px solid #eee' : 'none',
+      position: isDesktop ? 'sticky' : 'static', top: 90,
+      height: isDesktop ? 'auto' : '100%',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h3 style={{ fontWeight: 700, fontSize: 16 }}>Filters</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={clearAll} style={{ fontSize: 12, color: '#F97316', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+            Clear All
+          </button>
+          {!isDesktop && (
+            <button onClick={() => setShowFilter(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#6b7280' }}>
+              <X size={18} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Categories */}
+      <div style={{ marginBottom: 20 }}>
+        <h4 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#888', letterSpacing: 1 }}>CATEGORIES</h4>
+        {categories.map(c => (
+          <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, cursor: 'pointer', fontSize: 14 }}>
+            <input
+              type="radio"
+              name="cat"
+              checked={category === c.slug}
+              onChange={() => toggleParam('category', c.slug)}
+            />
+            {c.name}
+          </label>
+        ))}
+      </div>
+
+      {/* Pet Type */}
+      <div style={{ marginBottom: 20 }}>
+        <h4 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#888', letterSpacing: 1 }}>PET TYPE</h4>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {PET_TYPES.map(t => (
+            <button key={t}
+              onClick={() => toggleParam('pet_type', t)}
+              style={{
+                padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                border: '1.5px solid',
+                borderColor: pet_type === t ? '#F97316' : '#ddd',
+                background:  pet_type === t ? '#FFF7F0' : '#fff',
+                color:       pet_type === t ? '#F97316' : '#555',
+                cursor: 'pointer', textTransform: 'capitalize',
+              }}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Price Range */}
+      <div>
+        <h4 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#888', letterSpacing: 1 }}>PRICE RANGE</h4>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <input
+            placeholder="Min"
+            value={minPrice}
+            type="number"
+            min={0}
+            onChange={e => setMinPrice(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && applyPrice()}
+            style={{ flex: 1, padding: '7px 10px', fontSize: 13, border: '1px solid #ddd', borderRadius: 8, outline: 'none', minWidth: 0 }}
+          />
+          <input
+            placeholder="Max"
+            value={maxPrice}
+            type="number"
+            min={0}
+            onChange={e => setMaxPrice(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && applyPrice()}
+            style={{ flex: 1, padding: '7px 10px', fontSize: 13, border: '1px solid #ddd', borderRadius: 8, outline: 'none', minWidth: 0 }}
+          />
+        </div>
+        <button
+          onClick={applyPrice}
+          style={{
+            width: '100%', padding: '8px 0', borderRadius: 8, fontSize: 13,
+            fontWeight: 600, background: '#F97316', color: '#fff',
+            border: 'none', cursor: 'pointer',
+          }}>
+          Apply Price
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{
@@ -229,7 +217,7 @@ export default function Products() {
       margin: '0 auto',
     }}>
 
-      {/* ── Mobile Filter Drawer ── */}
+      {/* ── Mobile Filter Drawer (overlay) ── */}
       {!isDesktop && showFilter && (
         <>
           {/* Backdrop */}
@@ -241,18 +229,14 @@ export default function Products() {
             }}
           />
           {/* Drawer */}
-          <div
-            style={{
-              position: 'fixed', top: 0, left: 0, bottom: 0,
-              width: 280, background: '#fff',
-              zIndex: 500, overflowY: 'auto',
-              boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
-              padding: 0,
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-          >
-            <FilterPanel {...filterProps} />
+          <div style={{
+            position: 'fixed', top: 0, left: 0, bottom: 0,
+            width: 280, background: '#fff',
+            zIndex: 500, overflowY: 'auto',
+            boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+            padding: 0,
+          }}>
+            <FilterPanel />
           </div>
         </>
       )}
@@ -262,14 +246,16 @@ export default function Products() {
         {/* ── Desktop Sidebar ── */}
         {isDesktop && showFilter && (
           <aside style={{ width: 240, flexShrink: 0 }}>
-            <FilterPanel {...filterProps} />
+            <FilterPanel />
           </aside>
         )}
 
         {/* ── Main Content ── */}
         <div style={{ flex: 1, minWidth: 0 }}>
 
+          {/* Header row */}
           <div style={{ marginBottom: 20 }}>
+            {/* Title + count */}
             <div style={{ marginBottom: 12 }}>
               <h1 style={{
                 fontWeight: 700,
@@ -287,16 +273,23 @@ export default function Products() {
               </p>
             </div>
 
+            {/* Sort + Filter toggle — full width row on mobile */}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <select
                 value={sort}
                 onChange={e => setParam('sort', e.target.value)}
                 style={{
-                  flex: 1, padding: '8px 10px', fontSize: 13,
-                  border: '1px solid #ddd', borderRadius: 8,
-                  background: '#fff', color: '#333',
-                  outline: 'none', appearance: 'auto',
-                  cursor: 'pointer', minWidth: 0,
+                  flex: 1,
+                  padding: '8px 10px',
+                  fontSize: 13,
+                  border: '1px solid #ddd',
+                  borderRadius: 8,
+                  background: '#fff',
+                  color: '#333',
+                  outline: 'none',
+                  appearance: 'auto',
+                  cursor: 'pointer',
+                  minWidth: 0,
                 }}
               >
                 {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -304,7 +297,8 @@ export default function Products() {
               <button
                 onClick={() => setShowFilter(v => !v)}
                 style={{
-                  flexShrink: 0, border: '1px solid',
+                  flexShrink: 0,
+                  border: '1px solid',
                   borderColor: showFilter ? '#F97316' : '#ddd',
                   background:  showFilter ? '#FFF7F0' : '#fff',
                   color:       showFilter ? '#F97316' : '#555',
@@ -317,14 +311,17 @@ export default function Products() {
             </div>
           </div>
 
+          {/* Products */}
           {loading ? (
             <div className="spinner" />
           ) : products.length === 0 ? (
             <div style={{
               textAlign: 'center',
               padding: isDesktop ? '80px 20px' : '40px 16px',
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', gap: 12,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 12,
             }}>
               <div style={{ fontSize: isDesktop ? 64 : 48 }}>🐾</div>
               <h3 style={{ margin: 0, color: '#555', fontSize: isDesktop ? 18 : 16 }}>No products found</h3>
@@ -332,10 +329,15 @@ export default function Products() {
               <button
                 onClick={clearAll}
                 style={{
-                  marginTop: 4, padding: '10px 28px',
-                  background: '#F97316', color: '#fff',
-                  border: 'none', borderRadius: 8,
-                  fontWeight: 600, fontSize: 14, cursor: 'pointer',
+                  marginTop: 4,
+                  padding: '10px 28px',
+                  background: '#F97316',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: 'pointer',
                 }}
               >
                 Clear Filters
@@ -349,7 +351,7 @@ export default function Products() {
               {totalPages > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 40, flexWrap: 'wrap' }}>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                    <button key={p} onClick={() => setParam('page', String(p))}
+                    <button key={p} onClick={() =>setParam('page', String(p))}
                       style={{
                         width: 36, height: 36, borderRadius: 8, border: '1.5px solid',
                         borderColor: page === p ? '#F97316' : '#ddd',
