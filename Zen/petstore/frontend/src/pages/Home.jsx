@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Truck, RefreshCw, Phone } from 'lucide-react';
+import { ArrowRight, Shield, Truck, RefreshCw, Phone, PawPrint, Fish, Bone, Sparkles, Heart, ShoppingBag } from 'lucide-react';
 import api from '../utils/api';
 import ProductCard from '../components/ProductCard';
 import banner from '../assets/banner.jpg';
@@ -13,6 +13,16 @@ const FEATURES = [
   { icon: <RefreshCw size={24} />, title: 'Easy Returns', desc: 'As per terms & conditions' },
   { icon: <Phone size={24} />, title: 'Support', desc: 'Always here for you' },
 ];
+
+// Map category names to icons
+const CATEGORY_ICONS = {
+  'Pets': PawPrint,
+  'Aquarium': Fish,
+  'Pet Foods': Bone,
+  'Grooming': Sparkles,
+  'Health & Wellness': Heart,
+  'Pet Accessories': ShoppingBag,
+};
 
 export default function Home() {
   const [featured, setFeatured] = useState([]);
@@ -123,29 +133,59 @@ export default function Home() {
             <p className="section-subtitle">Everything your pet needs in one place</p>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(170px, 1fr))',
-              gap: isMobile ? 10 : 16
+              gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(150px, 1fr))',
+              gap: isMobile ? 8 : 16
             }}>
-              {categories.map(cat => (
-                <Link
-                  key={cat.id}
-                  to={`/products?category=${cat.slug}`}
-                  style={{
-                    background: '#F97316', color: '#ffffff', borderRadius: 10,
-                    padding: isMobile ? '14px 8px' : '22px 18px',
-                    textAlign: 'center', border: 'none', transition: 'all 0.3s',
-                    fontWeight: 600, fontSize: isMobile ? 12 : 16.5,
-                    minHeight: '52px', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center',
-                    whiteSpace: 'normal', lineHeight: 1.3, wordBreak: 'break-word',
-                    textDecoration: 'none'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#EA580C'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = '#F97316'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                >
-                  {cat.name}
-                </Link>
-              ))}
+              {categories.map(cat => {
+                const Icon = CATEGORY_ICONS[cat.name] || PawPrint;
+                return (
+                  <Link
+                    key={cat.id}
+                    to={`/products?category=${cat.slug}`}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 10,
+                      textDecoration: 'none',
+                      padding: isMobile ? '16px 8px' : '20px 12px',
+                      borderRadius: 14,
+                      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform = 'translateY(-6px)';
+                      e.currentTarget.style.boxShadow = '0 12px 24px rgba(249, 115, 22, 0.18)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    <div style={{
+                      width: isMobile ? 60 : 76,
+                      height: isMobile ? 60 : 76,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #FDBA74 0%, #F97316 55%, #EA580C 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 14px rgba(249, 115, 22, 0.28)',
+                    }}>
+                      <Icon size={isMobile ? 26 : 32} color="#fff" strokeWidth={1.8} />
+                    </div>
+                    <span style={{
+                      fontWeight: 600,
+                      fontSize: isMobile ? 12.5 : 15,
+                      color: '#1C1C1C',
+                      textAlign: 'center',
+                      lineHeight: 1.3,
+                    }}>
+                      {cat.name}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
