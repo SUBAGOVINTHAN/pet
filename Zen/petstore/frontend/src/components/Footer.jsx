@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Heart, Phone, Mail, MapPin } from "lucide-react";
 import msmeLogo from '../assets/footer.png';
+import gstLogo from '../assets/gst.png';
 
 export default function Footer() {
   return (
@@ -149,33 +150,50 @@ export default function Footer() {
           </div>
         </div>
         <div
-  style={{
-    borderTop: '1px solid #333',
-    paddingTop: 20,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: 12,
-  }}
->
-  <span style={{ fontSize: 13, color: '#666' }}>
-    © 2025 PetStore. Made with{' '}
-    <Heart size={12} color="#F97316" style={{ display: 'inline', margin: '0 3px' }} />{' '}
-    for pets everywhere.
-  </span>
+          style={{
+            borderTop: '1px solid #333',
+            paddingTop: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 13, color: '#666' }}>
+            © 2025 PetStore. Made with{' '}
+            <Heart size={12} color="#F97316" style={{ display: 'inline', margin: '0 3px' }} />{' '}
+            for pets everywhere.
+          </span>
 
-  <img
-    src={msmeLogo}
-    alt="Ministry of MSME, Govt. of India"
-    style={{
-      height: 44,
-      width: 'auto',
-      opacity: 0.7,
-      filter: 'brightness(0) invert(1)',
-    }}
-  />
-</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <img
+                src={gstLogo}
+                alt="GST"
+                style={{
+                  height: 32,
+                  width: 'auto',
+                  opacity: 0.9,
+                }}
+              />
+              <span style={{ fontSize: 13, color: '#999' }}>
+                GST No: 33FYWPR1378M1ZD
+              </span>
+            </div>
+
+            <img
+              src={msmeLogo}
+              alt="Ministry of MSME, Govt. of India"
+              style={{
+                height: 44,
+                width: 'auto',
+                opacity: 0.7,
+                filter: 'brightness(0) invert(1)',
+              }}
+            />
+          </div>
+        </div>
       </div>
     </footer>
   );
