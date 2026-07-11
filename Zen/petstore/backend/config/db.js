@@ -9,7 +9,7 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'pet',
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 2,
   queueLimit: 0,
   family: 4 
 });
@@ -21,7 +21,7 @@ export const testConnection = async () => {
     conn.release();
   } catch (err) {
     console.error('❌ MySQL Connection failed:', err.message);
-    process.exit(1);
+    
   }
 };
 
