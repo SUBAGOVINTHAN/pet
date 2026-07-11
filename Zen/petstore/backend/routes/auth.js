@@ -44,6 +44,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// ── LOGIN (admin → OTP flow, user → direct token) ──────────────────────────
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -52,10 +53,31 @@ router.post('/login', async (req, res) => {
     const user = rows[0];
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
+
     if (user.role === 'admin') {
-      const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-      return res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+      // Generate OTP and email it — do NOT return a token yet
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expires = new Date(Date.now() + 10 * 60 * 1000);
+      await db.query('UPDATE users SET otp = ?, otp_expires = ? WHERE id = ?', [otp, expires, user.id]);
+
+      await sendBrevoEmail({
+        to: user.email,
+        subject: 'Admin Login OTP - PetStore',
+        htmlContent: `
+          <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #eee;border-radius:12px">
+            <h2 style="color:#F97316">🐾 PetStore Admin</h2>
+            <p>Your admin login OTP is:</p>
+            <div style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#F97316;text-align:center;padding:16px;background:#FFF7F0;border-radius:8px;margin:16px 0">
+              ${otp}
+            </div>
+            <p style="color:#888;font-size:13px">Expires in <strong>10 minutes</strong>. Do not share it.</p>
+          </div>
+        `,
+      });
+
+      return res.json({ requireOtp: true, email: user.email, message: 'OTP sent to admin email' });
     }
+
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone } });
   } catch (err) {
@@ -63,6 +85,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// ── ADMIN OTP VERIFY (returns token after OTP matches) ─────────────────────
 router.post('/admin-verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
