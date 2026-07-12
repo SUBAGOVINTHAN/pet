@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, User, Search, LogOut, Package, LayoutDashboard, X, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import logo from '../assets/logo.jpg';
+import logo from '../assets/logo.png';
 
 // ✅ Debounce hook
 function useDebounce(value, delay) {
