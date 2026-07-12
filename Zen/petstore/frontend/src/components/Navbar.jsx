@@ -119,8 +119,7 @@ export default function Navbar() {
         background: '#fff', border: '1px solid #eee',
         borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
         zIndex: 9999,
-        maxHeight: '45vh',      // ✅ Screen-ல் 45% மட்டும் occupy பண்ணும்
-        overflowY: 'auto',      // ✅ மிகுதி results scroll பண்ண முடியும்
+        maxHeight: '45vh',      
         overflowX: 'hidden',
       }}>
         {suggestions.map((p, i) => (
